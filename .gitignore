@@ -15,6 +15,8 @@ crash.*.log
 # to change depending on the environment.
 *.tfvars
 *.tfvars.json
+*.auto.tfvars
+
 
 # Ignore override files as they are usually used to override resources locally and so
 # are not checked in
@@ -38,3 +40,26 @@ terraform.rc
 
 # IDEA files
 .idea/
+
+
+
+# Sensitive variables (locals)
+*.pem
+*.key
+*.pub
+*.csv
+# SSH private keys
+**/crm-sftp
+**/id_rsa
+# AWS credentials
+.aws/
+
+.ssh/
+
+*.tfvars
+# Compiled JARs and build artifacts
+target/
+*.jar
+
+.DS_Store
+Thumbs.db
