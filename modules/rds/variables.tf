@@ -1,9 +1,19 @@
-variable "rds_primary_subnet_id" {
-  description = "The ID of the subnet where primary RDS will be created"
-  type        = string
+variable "rds_subnet_ids" {
+  description = "List of subnet IDs for RDS"
+  type        = list(string)
 }
 
-variable "rds_backup_subnet_id" {
-  description = "The ID of the subnet where backup RDS will be created"
-  type        = string
+variable "transaction_rds_permitted_sgs" {
+  description = "List of Security Group IDs allowed to access the Transaction RDS instance"
+  type        = list(string)
+}
+
+variable "client_rds_permitted_sgs" {
+  description = "List of Security Group IDs allowed to access the Client RDS instance"
+  type        = list(string)
+}
+
+variable "account_rds_permitted_sgs" {
+  description = "List of Security Group IDs allowed to access the Account RDS instance"
+  type        = list(string)
 }
