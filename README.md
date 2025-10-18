@@ -99,7 +99,7 @@ sftp> ls upload/incoming
 > docker rm -f bank-sftp
 > docker run -d --name bank-sftp `
 >   -p 2222:22 `
->   -v C:\sftpdata\upload:/home/bank/upload `
+>   -v C:\sftpdata\upload:/home/bank/upload/incoming `
 >   -v $HOME\.ssh\docker-sftp.pub:/home/bank/.ssh/keys/id_ed25519.pub:ro `
 >   atmoz/sftp bank::1001
 > ```
@@ -168,7 +168,7 @@ cd .\terraform
 terraform init
 terraform apply `
   -var="sftp_host=0.tcp.ap.ngrok.io" `
-  -var="sftp_port=11026" `
+  -var="sftp_port=15736" `
   -var="sftp_user=bank" `
   -var="sftp_password=1234" `
   -var="db_password=YourStrongPwd123!"

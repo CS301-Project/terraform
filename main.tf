@@ -1,6 +1,4 @@
-<<<<<<< Updated upstream
 #
-=======
 
 module "vpc" {
   source               = "./modules/vpc"
@@ -49,12 +47,13 @@ module "lambda_sftp_fetch" {
 
 
 module "rds" {
-  source      = "./modules/rds"
-  name        = "crm-db"
-  vpc_id      = module.vpc.vpc_id
-  subnet_ids  = [module.vpc.public_subnet_id, module.vpc.public_subnet_id_2]
-  db_username = var.db_username
-  db_password = var.db_password
-  tags        = var.tags
+  source         = "./modules/rds"
+  name           = "crm-db"
+  vpc_id         = module.vpc.vpc_id
+  subnet_ids     = [module.vpc.public_subnet_id, module.vpc.public_subnet_id_2]
+  db_username    = var.db_username
+  db_password    = var.db_password
+  db_name        = "crmdb"
+  tags           = var.tags
 }
->>>>>>> Stashed changes
+

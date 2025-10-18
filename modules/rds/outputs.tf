@@ -1,4 +1,4 @@
-output "instance_public_ip" {
-  value = ""                                          # The actual value to be outputted
-  description = "The public IP address of the EC2 instance" # Description of what this output represents
-}
+output "endpoint" { value = aws_db_instance.this.address }
+output "port"     { value = aws_db_instance.this.port }
+output "username" { value = var.db_username }
+output "db_name"  { value = var.db_name }

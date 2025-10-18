@@ -27,7 +27,7 @@ variable "sftp_host" {
 } # e.g., module.sftp.sftp_public_ip
 variable "sftp_port" {
   type    = number
-  default = 11026
+  default = 15736
 }
 variable "sftp_user" {
   type    = string
@@ -58,3 +58,4 @@ variable "az_2" {
   type    = string
   default = "ap-southeast-1b"
 }
+
