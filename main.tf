@@ -16,3 +16,9 @@ module "network_acl_associations" {
   rds_primary_subnet_id = module.vpc.rds_primary_subnet_id
   rds_backup_subnet_id  = module.vpc.rds_backup_subnet_id
 }
+
+module "rds" {
+  source = "./modules/rds"
+  rds_primary_subnet_id = module.vpc.rds_primary_subnet_id
+  rds_backup_subnet_id  = module.vpc.rds_backup_subnet_id
+}
