@@ -29,3 +29,22 @@ resource "aws_security_group" "allow_account_ecs_to_account_rds" {
   description = "Allow Postgres traffic from Account ECS tasks to Account RDS"
   vpc_id      = var.vpc_id
 }
+
+resource "aws_security_group" "lambda_logging_sg" {
+  name        = "lambda-logging-sg"
+  description = "Security Group for Lambda log processor"
+  vpc_id      = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
+  }
+
+  tags = {
+    Name        = "lambda-logging-sg"
+    Environment = "production"
+  }
+}
