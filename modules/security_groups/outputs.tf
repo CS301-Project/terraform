@@ -22,3 +22,8 @@ output "allow_account_ecs_to_account_rds_sg_id" {
   description = "Security Group ID allowing Account ECS to access Account RDS Postgres"
   value       = aws_security_group.allow_account_ecs_to_account_rds.id
 }
+
+output "lambda_logging_sg_id" {
+  description = "Security Group ID for Lambda logging function"
+  value       = aws_security_group.lambda_logging_sg.id
+}

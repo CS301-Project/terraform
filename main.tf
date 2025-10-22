@@ -52,3 +52,26 @@ module "security_groups" {
   source = "./modules/security_groups"
   vpc_id = module.vpc.vpc_id
 }
+
+# Logging Infrastructure
+module "dynamodb" {
+  source = "./modules/dynamodb"
+}
+
+module "sqs" {
+  source = "./modules/sqs"
+}
+
+module "lambda_logging" {
+  source             = "./modules/lambda-logging"
+  logs_table_name    = module.dynamodb.logs_table_name
+  dynamodb_table_arn = module.dynamodb.logs_table_arn
+  sqs_queue_arn      = module.sqs.logging_queue_arn
+  subnet_ids = [
+    module.vpc.ecs_az1_subnet_id,
+    module.vpc.ecs_az2_subnet_id
+  ]
+  security_group_ids = [
+    module.security_groups.lambda_logging_sg_id
+  ]
+}
