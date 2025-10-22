@@ -20,11 +20,6 @@ resource "aws_lambda_function" "log_processor" {
     }
   }
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_group_ids
-  }
-
   tags = {
     Name        = "log-processor"
     Environment = "production"
