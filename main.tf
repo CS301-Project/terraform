@@ -1,21 +1,23 @@
 module "vpc" {
-  source = "./modules/vpc"
+  source             = "./modules/vpc"
+  aws_region         = "ap-southeast-1"
+  vpc_endpoint_sg_id = module.security_groups.vpc_endpoint_sg_id
 }
 
-module "network_acls" {
-  source = "./modules/network_acls"
-  vpc_id = module.vpc.vpc_id
-}
+# module "network_acls" {
+#   source = "./modules/network_acls"
+#   vpc_id = module.vpc.vpc_id
+# }
 
-module "network_acl_associations" {
-  source                = "./modules/associations"
-  db_acl_id             = module.network_acls.db_acl_id
-  ecs_acl_id            = module.network_acls.ecs_acl_id
-  ecs_az1_subnet_id     = module.vpc.ecs_az1_subnet_id
-  ecs_az2_subnet_id     = module.vpc.ecs_az2_subnet_id
-  rds_primary_subnet_id = module.vpc.rds_primary_subnet_id
-  rds_backup_subnet_id  = module.vpc.rds_backup_subnet_id
-}
+# module "network_acl_associations" {
+#   source                = "./modules/associations"
+#   db_acl_id             = module.network_acls.db_acl_id
+#   ecs_acl_id            = module.network_acls.ecs_acl_id
+#   ecs_az1_subnet_id     = module.vpc.ecs_az1_subnet_id
+#   ecs_az2_subnet_id     = module.vpc.ecs_az2_subnet_id
+#   rds_primary_subnet_id = module.vpc.rds_primary_subnet_id
+#   rds_backup_subnet_id  = module.vpc.rds_backup_subnet_id
+# }
 
 module "rds" {
   source = "./modules/rds"
@@ -74,4 +76,40 @@ module "lambda_logging" {
   security_group_ids = [
     module.security_groups.lambda_logging_sg_id
   ]
+}
+
+module "network" {
+  source               = "./modules/network"
+  vpc_id               = module.vpc.vpc_id
+  public_subnet_az1_id = module.vpc.public_subnet_az1_id
+  public_subnet_az2_id = module.vpc.public_subnet_az2_id
+}
+
+module "alb" {
+  source = "./modules/alb"
+  assigned_sg_ids = [
+    module.security_groups.alb_sg_id
+  ]
+  public_subnet_ids = [
+    module.vpc.public_subnet_az1_id,
+    module.vpc.public_subnet_az2_id
+  ]
+  vpc_id = module.vpc.vpc_id
+}
+
+module "ecs_cluster" {
+  source            = "./modules/ecs_cluster"
+  account_ecs_sg_id = module.security_groups.account_ecs_sg_id
+  client_ecs_sg_id  = module.security_groups.client_ecs_sg_id
+  ecs_private_subnet_ids = [
+    module.vpc.ecs_az1_subnet_id,
+    module.vpc.ecs_az2_subnet_id
+  ]
+  account_alb_target_group_arn = module.alb.account_alb_target_group_arn
+  client_alb_target_group_arn  = module.alb.client_alb_target_group_arn
+  ecs_instance_profile_name    = module.iam.ecs_instance_profile_name
+}
+
+module "iam" {
+  source = "./modules/iam"
 }
