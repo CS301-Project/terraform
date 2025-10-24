@@ -222,6 +222,20 @@ resource "aws_s3_bucket_policy" "frontend_oac" {
   policy = data.aws_iam_policy_document.frontend_oac.json
 }
 
+resource "null_resource" "upload_frontend" {
+  triggers = {
+    # Change this when files change to force re-run (bump the value)
+    content_version = "1"
+    bucket          = module.s3_frontend.bucket_name
+  }
+
+  depends_on = [module.cloudfront, module.s3_frontend]
+
+  provisioner "local-exec" {
+    command = "aws s3 sync ${var.frontend_local_dir} s3://${module.s3_frontend.bucket_name}/ --delete"
+  }
+}
+
 
 # --- Route53 alias (A/AAAA) to CloudFront ---
 # module "route53" {
@@ -270,4 +284,10 @@ variable "alb_dns_name" {
 variable "api_origin_request_policy_id" {
   type    = string
   default = null
+}
+
+variable "frontend_local_dir" {
+  type        = string
+  description = "Local path to the site files to upload to S3"
+  default     = "./site" 
 }
