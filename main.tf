@@ -113,3 +113,161 @@ module "ecs_cluster" {
 module "iam" {
   source = "./modules/iam"
 }
+
+# --- ACM certificate in us-east-1 for CloudFront (DNS validation in your hosted zone) ---
+# data "aws_route53_zone" "primary" {
+#   zone_id = var.hosted_zone_id
+# }
+
+# #resource "aws_acm_certificate" "cf" {
+#  provider                  = aws.use1
+#  domain_name               = var.domain_name
+#  subject_alternative_names = var.alternate_names
+#  validation_method         = "DNS"
+#  lifecycle { create_before_destroy = true }
+#}
+
+# resource "aws_route53_record" "cert_validation" {
+#   for_each = {
+#     for dvo in aws_acm_certificate.cf.domain_validation_options : dvo.domain_name => {
+#       name    = dvo.resource_record_name
+#       value   = dvo.resource_record_value
+#       type    = dvo.resource_record_type
+#       zone_id = data.aws_route53_zone.primary.zone_id
+#     }
+#   }
+
+#   name    = each.value.name
+#   type    = each.value.type
+#   records = [each.value.value]
+#   ttl     = 60
+#   zone_id = each.value.zone_id
+# }
+
+# resource "aws_acm_certificate_validation" "cf" {
+#   provider                = aws.use1
+#   certificate_arn         = aws_acm_certificate.cf.arn
+#   validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
+# }
+
+# --- WAF (global / CLOUDFRONT scope) ---
+module "waf" {
+  source    = "./modules/waf"
+  providers = { aws = aws.use1 }
+
+  name                = "${var.project_name}-cf-waf"
+  enable_rate_limit   = true
+  rate_limit_requests = 1000
+}
+
+# --- S3 frontend bucket (private; OAC-only access) ---
+module "s3_frontend" {
+  source = "./modules/s3_frontend"
+
+  bucket_name       = var.frontend_bucket_name
+  enable_versioning = true
+  force_destroy     = false
+  # This will be populated when CF is created in the same plan
+  cloudfront_distribution_arn = module.cloudfront.distribution_arn
+}
+
+# --- CloudFront distribution (S3 origin + optional ALB /api/*) ---
+module "cloudfront" {
+  source = "./modules/cloudfront"
+
+  name                = "${var.project_name}-cf"
+  aliases             = [] # e.g., ["app.example.com"]
+  use_default_certificate = true
+  web_acl_arn         = module.waf.web_acl_arn
+
+  s3_bucket_name   = module.s3_frontend.bucket_name
+  s3_bucket_region = var.region
+
+  price_class = "PriceClass_100"
+
+  # Optional: route /api/* to your ALB backend
+  enable_api_behavior          = var.enable_api_behavior
+  api_path_pattern             = var.api_path_pattern
+  alb_origin_dns_name          = var.alb_dns_name
+  api_origin_request_policy_id = var.api_origin_request_policy_id
+
+  # Optional logging
+  log_bucket = var.cf_log_bucket
+  log_prefix = "cloudfront/"
+}
+
+# Allow CloudFront (via OAC) to read from the S3 bucket
+data "aws_iam_policy_document" "frontend_oac" {
+  statement {
+    sid     = "AllowCloudFrontAccessViaOAC"
+    effect  = "Allow"
+    actions = ["s3:GetObject"]
+    resources = ["${module.s3_frontend.bucket_arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [module.cloudfront.distribution_arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "frontend_oac" {
+  bucket = module.s3_frontend.bucket_name
+  policy = data.aws_iam_policy_document.frontend_oac.json
+}
+
+
+# --- Route53 alias (A/AAAA) to CloudFront ---
+# module "route53" {
+#   source = "./modules/route53"
+
+#   hosted_zone_id         = var.hosted_zone_id
+#   record_name            = var.record_name # e.g., "app.example.com"
+#   cloudfront_domain_name = module.cloudfront.domain_name
+# }
+
+
+#VARIABLES might need to move it
+variable "project_name" { type = string }
+variable "region" {
+  type    = string
+  default = "ap-southeast-1"
+}
+
+variable "hosted_zone_id" { type = string } # existing Route 53 zone
+variable "domain_name" { type = string }    # apex used for ACM, e.g., example.com
+variable "alternate_names" {
+  type    = list(string)
+  default = []
+}                                        # e.g., ["app.example.com"]
+variable "record_name" { type = string } # e.g., "app.example.com"
+
+variable "frontend_bucket_name" { type = string }
+
+# Optional logging / API
+variable "cf_log_bucket" {
+  type    = string
+  default = ""
+} # S3 bucket name (no ARN)
+variable "enable_api_behavior" {
+  type    = bool
+  default = false
+}
+variable "api_path_pattern" {
+  type    = string
+  default = "/api/*"
+}
+variable "alb_dns_name" {
+  type    = string
+  default = ""
+} # from your ALB module output, if used
+variable "api_origin_request_policy_id" {
+  type    = string
+  default = null
+}
