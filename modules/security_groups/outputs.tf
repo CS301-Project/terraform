@@ -27,3 +27,13 @@ output "lambda_logging_sg_id" {
   description = "Security Group ID for Lambda logging function"
   value       = aws_security_group.lambda_logging_sg.id
 }
+
+output "alb_sg_id" {
+  description = "Security Group ID defining ingress and egress rules for ALB"
+  value       = aws_security_group.alb_sg.id
+}
+
+output "vpc_endpoint_sg_id" {
+  description = "Security Group ID for VPC endpoint"
+  value       = aws_security_group.vpc_endpoint_sg.id
+}
