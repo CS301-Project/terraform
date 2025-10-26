@@ -175,10 +175,10 @@ module "s3_frontend" {
 module "cloudfront" {
   source = "./modules/cloudfront"
 
-  name                = "${var.project_name}-cf"
-  aliases             = [] # e.g., ["app.example.com"]
+  name                    = "${var.project_name}-cf"
+  aliases                 = [] # e.g., ["app.example.com"]
   use_default_certificate = true
-  web_acl_arn         = module.waf.web_acl_arn
+  web_acl_arn             = module.waf.web_acl_arn
 
   s3_bucket_name   = module.s3_frontend.bucket_name
   s3_bucket_region = var.region
@@ -199,9 +199,9 @@ module "cloudfront" {
 # Allow CloudFront (via OAC) to read from the S3 bucket
 data "aws_iam_policy_document" "frontend_oac" {
   statement {
-    sid     = "AllowCloudFrontAccessViaOAC"
-    effect  = "Allow"
-    actions = ["s3:GetObject"]
+    sid       = "AllowCloudFrontAccessViaOAC"
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
     resources = ["${module.s3_frontend.bucket_arn}/*"]
 
     principals {
@@ -222,19 +222,48 @@ resource "aws_s3_bucket_policy" "frontend_oac" {
   policy = data.aws_iam_policy_document.frontend_oac.json
 }
 
-resource "null_resource" "upload_frontend" {
+# Build first (optional but handy)
+resource "null_resource" "build_frontend" {
   triggers = {
-    # Change this when files change to force re-run (bump the value)
-    content_version = "1"
-    bucket          = module.s3_frontend.bucket_name
+    # bump this to force a rebuild
+    build_version = var.build_version
   }
-
-  depends_on = [module.cloudfront, module.s3_frontend]
 
   provisioner "local-exec" {
-    command = "aws s3 sync ${var.frontend_local_dir} s3://${module.s3_frontend.bucket_name}/ --delete"
+    working_dir = var.frontend_local_dir
+    command     = "npm ci && npm run build:static" # produces ./out
   }
 }
+
+resource "null_resource" "upload_frontend" {
+  triggers = {
+    build_version = null_resource.build_frontend.triggers.build_version
+    bucket = module.s3_frontend.bucket_name
+  }
+
+  depends_on = [null_resource.build_frontend, module.cloudfront, module.s3_frontend]
+
+  provisioner "local-exec" {
+    # Run the sync from the out/ folder so paths are simple
+    working_dir = "${var.frontend_local_dir}/out"
+    command     = "aws s3 sync . s3://${module.s3_frontend.bucket_name}/ --delete"
+  }
+}
+
+resource "null_resource" "cf_invalidation" {
+  triggers = {
+    build_version = null_resource.build_frontend.triggers.build_version
+    dist_id       = module.cloudfront.distribution_id
+  }
+
+  depends_on = [null_resource.upload_frontend]
+
+  provisioner "local-exec" {
+    command = "aws cloudfront create-invalidation --distribution-id ${module.cloudfront.distribution_id} --paths '/*'"
+  }
+}
+
+
 
 
 # --- Route53 alias (A/AAAA) to CloudFront ---
@@ -289,5 +318,11 @@ variable "api_origin_request_policy_id" {
 variable "frontend_local_dir" {
   type        = string
   description = "Local path to the site files to upload to S3"
-  default     = "./site" 
+  default     = "../frontend"
+}
+
+variable "build_version" {
+  type        = string
+  default     = "1" # bump this when you want a new deploy
+  description = "Manual trigger to rebuild/re-upload the frontend"
 }

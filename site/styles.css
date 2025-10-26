@@ -1,6 +1,0 @@
-*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:#0b1020;color:#e9eefb;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue','Noto Sans',sans-serif}
-main{max-width:760px;margin:6vh auto;padding:24px;background:#121a35;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-h1{margin:0 0 8px}
-.card{display:block}
-button{padding:10px 14px;border-radius:10px;border:0;background:#3a6df0;color:#fff;cursor:pointer}
-button:hover{filter:brightness(1.05)}
