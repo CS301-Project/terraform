@@ -24,3 +24,13 @@ output "lambda_log_processor_name" {
   description = "Name of the Lambda function processing logs"
   value       = module.lambda_logging.lambda_function_name
 }
+
+output "api_endpoint" {
+  description = "API Gateway endpoint URL for reading logs"
+  value       = module.api_gateway.api_endpoint
+}
+
+output "api_id" {
+  description = "API Gateway REST API ID"
+  value       = module.api_gateway.api_id
+}

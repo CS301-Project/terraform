@@ -78,6 +78,25 @@ module "lambda_logging" {
   ]
 }
 
+module "lambda_read_logs" {
+  source             = "./modules/lambda-read-logs"
+  logs_table_name    = module.dynamodb.logs_table_name
+  dynamodb_table_arn = module.dynamodb.logs_table_arn
+  subnet_ids = [
+    module.vpc.ecs_az1_subnet_id,
+    module.vpc.ecs_az2_subnet_id
+  ]
+  security_group_ids = [
+    module.security_groups.lambda_logging_sg_id
+  ]
+}
+
+module "api_gateway" {
+  source                     = "./modules/api-gateway"
+  read_lambda_invoke_arn     = module.lambda_read_logs.lambda_invoke_arn
+  read_lambda_function_name  = module.lambda_read_logs.lambda_function_name
+}
+
 module "network" {
   source               = "./modules/network"
   vpc_id               = module.vpc.vpc_id
