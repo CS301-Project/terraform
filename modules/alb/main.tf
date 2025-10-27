@@ -13,17 +13,20 @@ resource "aws_lb" "main" {
 }
 
 resource "aws_lb_target_group" "client" {
-  name     = "tg-client"
-  port     = 8080 # container port
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
+  name                 = "tg-client"
+  port                 = 8080
+  protocol             = "HTTP"
+  vpc_id               = var.vpc_id
+  target_type          = "instance"
+  deregistration_delay = 30
 
   health_check {
+    enabled             = true
     healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
+    unhealthy_threshold = 10
+    timeout             = 10
     interval            = 30
-    path                = "/health" # todo: Need to define a /health endpoint in the service
+    path                = "/actuator/health"
     matcher             = "200"
   }
 }
@@ -34,12 +37,16 @@ resource "aws_lb_target_group" "account" {
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
+  target_type          = "instance"
+  deregistration_delay = 30
+
   health_check {
+    enabled             = true
     healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
+    unhealthy_threshold = 10
+    timeout             = 10
     interval            = 30
-    path                = "/health" # todo: Need to define a /health endpoint in the service
+    path                = "/actuator/health"
     matcher             = "200"
   }
 }
@@ -73,7 +80,7 @@ resource "aws_lb_listener_rule" "client_rule" {
 
   condition {
     path_pattern {
-      values = ["/client/*"]
+      values = ["/client-profile/*"]
     }
   }
 }
