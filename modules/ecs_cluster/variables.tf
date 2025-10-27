@@ -27,3 +27,46 @@ variable "ecs_instance_profile_name" {
   description = "IAM Instance Profile for EC2 to assume to connect to ECS cluster"
   type        = string
 }
+
+variable "account_db_endpoint" {
+  description = "AWS Provisioned endpoint for Account RDS"
+}
+
+variable "client_db_endpoint" {
+  description = "AWS Provisioned endpoint for Client RDS"
+}
+
+variable "account_db_secret_arn" {
+  description = "ARN of the secret containing account database password"
+  type        = string
+}
+
+variable "client_db_secret_arn" {
+  description = "ARN of the secret containing client database password"
+  type        = string
+}
+
+variable "account_db_username" {
+  description = "Master username for account database"
+  type        = string
+}
+
+variable "client_db_username" {
+  description = "Master username for client database"
+  type        = string
+}
+
+variable "client_repository_url" {
+  description = "ECR repository URL for client service"
+  type        = string
+}
+
+variable "account_repository_url" {
+  description = "ECR repository URL for account service"
+  type        = string
+}
+
+variable "ecs_task_execution_role_arn" {
+  description = "ARN of the ECS task execution role"
+  type        = string
+}
