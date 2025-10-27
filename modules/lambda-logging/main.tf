@@ -7,12 +7,12 @@ data "archive_file" "lambda_logging" {
 resource "aws_lambda_function" "log_processor" {
   filename         = data.archive_file.lambda_logging.output_path
   function_name    = "log-processor"
-  role            = aws_iam_role.lambda_logging_role.arn
-  handler         = "lambda_function.lambda_handler"
+  role             = aws_iam_role.lambda_logging_role.arn
+  handler          = "lambda_function.lambda_handler"
   source_code_hash = data.archive_file.lambda_logging.output_base64sha256
-  runtime         = "python3.11"
-  timeout         = 60
-  memory_size     = 256
+  runtime          = "python3.11"
+  timeout          = 60
+  memory_size      = 256
 
   environment {
     variables = {
