@@ -61,8 +61,8 @@ resource "aws_cloudfront_distribution" "this" {
       path_pattern             = var.api_path_pattern
       target_origin_id         = "alb-origin"
       viewer_protocol_policy   = "redirect-to-https"
-      allowed_methods          = ["GET","HEAD","OPTIONS","PUT","POST","PATCH","DELETE"]
-      cached_methods           = ["GET","HEAD","OPTIONS"]
+      allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+      cached_methods           = ["GET", "HEAD", "OPTIONS"]
       cache_policy_id          = local.cache_dis_id
       origin_request_policy_id = var.api_origin_request_policy_id
     }
@@ -85,9 +85,9 @@ resource "aws_cloudfront_distribution" "this" {
   dynamic "viewer_certificate" {
     for_each = var.use_default_certificate ? [] : [1]
     content {
-    acm_certificate_arn     = var.acm_certificate_arn
-    ssl_support_method      = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
+      acm_certificate_arn      = var.acm_certificate_arn
+      ssl_support_method       = "sni-only"
+      minimum_protocol_version = "TLSv1.2_2021"
     }
   }
 

@@ -1,11 +1,11 @@
-
+# Force ACM in us-east-1 for CloudFront
 provider "aws" {
   region = "us-east-1"
 }
 
-data "aws_route53_zone" "this" {
-  name         = "itsag3t2.com."
-  private_zone = false
+
+locals {
+  itsag3t2_zone_id = "Z02476682ZA07ZPCPXK1X" # same hosted zone ID
 }
 
 resource "aws_acm_certificate" "this" {
@@ -18,7 +18,7 @@ resource "aws_acm_certificate" "this" {
   }
 }
 
-# Create DNS validation records in the existing public hosted zone.
+# DNS validation records in your hosted zone (no data source)
 resource "aws_route53_record" "cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.this.domain_validation_options : dvo.domain_name => {
@@ -33,10 +33,9 @@ resource "aws_route53_record" "cert_validation" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = data.aws_route53_zone.this.zone_id
+  zone_id         = local.itsag3t2_zone_id
 }
 
-# Finalize validation
 resource "aws_acm_certificate_validation" "this" {
   certificate_arn         = aws_acm_certificate.this.arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]

@@ -7,7 +7,7 @@ terraform {
 resource "aws_wafv2_web_acl" "this" {
   name        = var.name
   description = "WAF for CloudFront"
-  scope       = "CLOUDFRONT"  # Use provider alias aws.use1 (us-east-1)
+  scope       = "CLOUDFRONT" # Use provider alias aws.use1 (us-east-1)
 
   default_action {
     allow {}

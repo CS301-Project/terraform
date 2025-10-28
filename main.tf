@@ -172,10 +172,10 @@ module "cloudfront" {
   aliases                 = ["itsag3t2.com", "www.itsag3t2.com"]
   acm_certificate_arn     = module.acm.certificate_arn
 
-  web_acl_arn       = module.waf.web_acl_arn
-  s3_bucket_name    = module.s3_frontend.bucket_name
-  s3_bucket_region  = "ap-southeast-1"
-  price_class       = "PriceClass_100"
+  web_acl_arn      = module.waf.web_acl_arn
+  s3_bucket_name   = module.s3_frontend.bucket_name
+  s3_bucket_region = "ap-southeast-1"
+  price_class      = "PriceClass_100"
 
   #route /api/* to your ALB backend
   enable_api_behavior          = false
@@ -194,7 +194,7 @@ module "route53_apex" {
 }
 
 module "route53_www" {
-  source = "./modules/route53"
+  source                 = "./modules/route53"
   record_name            = "www.itsag3t2.com"
   cloudfront_domain_name = module.cloudfront.domain_name
 }
@@ -258,9 +258,11 @@ resource "null_resource" "cf_invalidation" {
     dist_id       = module.cloudfront.distribution_id
   }
 
-  depends_on = [null_resource.upload_frontend]
+  depends_on = [null_resource.upload_frontend, module.cloudfront]
 
   provisioner "local-exec" {
+    interpreter = ["PowerShell", "-Command"]
     command = "aws cloudfront create-invalidation --distribution-id ${module.cloudfront.distribution_id} --paths '/*'"
   }
 }
+
