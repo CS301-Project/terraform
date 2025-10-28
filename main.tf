@@ -159,3 +159,129 @@ module "iam" {
 module "ecr" {
   source = "./modules/ecr"
 }
+
+module "acm" {
+  source = "./modules/acm"
+}
+
+module "waf" {
+  source    = "./modules/waf"
+  providers = { aws = aws.use1 }
+
+  name                = "ubscrm-cf-waf"
+  enable_rate_limit   = true
+  rate_limit_requests = 1000
+}
+
+module "s3_frontend" {
+  source = "./modules/s3_frontend"
+
+  bucket_name       = "ubscrm-frontend-1"
+  enable_versioning = true
+  force_destroy     = true
+  # This will be populated when CF is created in the same plan
+  cloudfront_distribution_arn = module.cloudfront.distribution_arn
+}
+
+module "cloudfront" {
+  source = "./modules/cloudfront"
+
+  name                    = "ubscrm-cf"
+  use_default_certificate = false
+  aliases                 = ["itsag3t2.com", "www.itsag3t2.com"]
+  acm_certificate_arn     = module.acm.certificate_arn
+
+  web_acl_arn      = module.waf.web_acl_arn
+  s3_bucket_name   = module.s3_frontend.bucket_name
+  s3_bucket_region = "ap-southeast-1"
+  price_class      = "PriceClass_100"
+
+  #route /api/* to your ALB backend
+  enable_api_behavior          = false
+  api_path_pattern             = "/api/*"
+  alb_origin_dns_name          = ""
+  api_origin_request_policy_id = null
+
+}
+
+module "route53_apex" {
+  source = "./modules/route53"
+
+  # Your module already defaults to zone "itsag3t2.com."
+  record_name            = "itsag3t2.com"
+  cloudfront_domain_name = module.cloudfront.domain_name
+}
+
+module "route53_www" {
+  source                 = "./modules/route53"
+  record_name            = "www.itsag3t2.com"
+  cloudfront_domain_name = module.cloudfront.domain_name
+}
+
+
+data "aws_iam_policy_document" "frontend_oac" {
+  statement {
+    sid       = "AllowCloudFrontAccessViaOAC"
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
+    resources = ["${module.s3_frontend.bucket_arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [module.cloudfront.distribution_arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "frontend_oac" {
+  bucket = module.s3_frontend.bucket_name
+  policy = data.aws_iam_policy_document.frontend_oac.json
+}
+
+resource "null_resource" "build_frontend" {
+  triggers = {
+    # bump this to force a rebuild
+    build_version = "1"
+  }
+
+  provisioner "local-exec" {
+    working_dir = "../frontend"
+    command     = "npm ci && npm run build:static" # produces ./out
+  }
+}
+
+resource "null_resource" "upload_frontend" {
+  triggers = {
+    build_version = null_resource.build_frontend.triggers.build_version
+    bucket        = module.s3_frontend.bucket_name
+  }
+
+  depends_on = [null_resource.build_frontend, module.cloudfront, module.s3_frontend]
+
+  provisioner "local-exec" {
+    # Run the sync from the out/ folder so paths are simple
+    working_dir = "../frontend/out"
+    command     = "aws s3 sync . s3://${module.s3_frontend.bucket_name}/ --delete"
+  }
+}
+
+resource "null_resource" "cf_invalidation" {
+  triggers = {
+    build_version = null_resource.build_frontend.triggers.build_version
+    dist_id       = module.cloudfront.distribution_id
+  }
+
+  depends_on = [null_resource.upload_frontend, module.cloudfront]
+
+  provisioner "local-exec" {
+    interpreter = ["PowerShell", "-Command"]
+    command = "aws cloudfront create-invalidation --distribution-id ${module.cloudfront.distribution_id} --paths '/*'"
+  }
+}
+

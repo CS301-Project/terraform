@@ -12,3 +12,9 @@ terraform {
 provider "aws" {
   region = "ap-southeast-1"
 }
+
+#us-east-1 provider alias for CloudFront ACM + WAF (CLOUDFRONT)
+provider "aws" {
+  alias  = "use1"
+  region = "us-east-1"
+}
