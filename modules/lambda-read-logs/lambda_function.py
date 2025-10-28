@@ -31,7 +31,7 @@ def lambda_handler(event, context):
         if agent_id:
             # Query by agent_id (requires GSI)
             response = table.query(
-                IndexName='agent_id-index',
+                IndexName='AgentIdIndex',
                 KeyConditionExpression=Key('agent_id').eq(agent_id),
                 Limit=limit,
                 ScanIndexForward=False  # Most recent first
