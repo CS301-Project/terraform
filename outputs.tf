@@ -41,3 +41,30 @@ output "frontend_bucket" {
 # output "site_fqdn" {
 #   value = module.route53.fqdn
 # }
+
+
+output "cloudfront_domain_name" {
+  value = module.cloudfront.domain_name
+}
+
+output "cloudfront_distribution_id" {
+  value = module.cloudfront.distribution_id
+}
+
+output "frontend_bucket" {
+  value = module.s3_frontend.bucket_name
+}
+
+# output "site_fqdn" {
+#   value = module.route53.fqdn
+# }
+
+output "api_endpoint" {
+  description = "API Gateway endpoint URL for reading logs"
+  value       = module.api_gateway.api_endpoint
+}
+
+output "api_id" {
+  description = "API Gateway REST API ID"
+  value       = module.api_gateway.api_id
+}
