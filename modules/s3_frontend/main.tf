@@ -30,32 +30,3 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   }
 }
 
-# data "aws_iam_policy_document" "bucket_policy" {
-#   dynamic "statement" {
-#     for_each = var.cloudfront_distribution_arn == "" ? [] : [1]
-#     content {
-#       sid     = "AllowCloudFrontAccessViaOAC"
-#       effect  = "Allow"
-#       actions = ["s3:GetObject"]
-#       resources = ["${aws_s3_bucket.this.arn}/*"]
-
-#       principals {
-#         type        = "Service"
-#         identifiers = ["cloudfront.amazonaws.com"]
-#       }
-
-#       condition {
-#         test     = "StringEquals"
-#         variable = "AWS:SourceArn"
-#         values   = [var.cloudfront_distribution_arn]
-#       }
-#     }
-#   }
-# }
-
-# resource "aws_s3_bucket_policy" "this" {
-#   count  = var.cloudfront_distribution_arn == "" ? 0 : 1
-#   bucket = aws_s3_bucket.this.id
-#   policy = data.aws_iam_policy_document.bucket_policy.json
-# }
-

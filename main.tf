@@ -141,53 +141,46 @@ module "ecr" {
   source = "./modules/ecr"
 }
 
-# --- WAF (global / CLOUDFRONT scope) ---
 module "waf" {
   source    = "./modules/waf"
   providers = { aws = aws.use1 }
 
-  name                = "${var.project_name}-cf-waf"
+  name                = "ubscrm-cf-waf"
   enable_rate_limit   = true
   rate_limit_requests = 1000
 }
 
-# --- S3 frontend bucket (private; OAC-only access) ---
 module "s3_frontend" {
   source = "./modules/s3_frontend"
 
-  bucket_name       = var.frontend_bucket_name
+  bucket_name       = "ubscrm-frontend-1"
   enable_versioning = true
-  force_destroy     = false
+  force_destroy     = true
   # This will be populated when CF is created in the same plan
   cloudfront_distribution_arn = module.cloudfront.distribution_arn
 }
 
-# --- CloudFront distribution (S3 origin + optional ALB /api/*) ---
 module "cloudfront" {
   source = "./modules/cloudfront"
 
-  name                    = "${var.project_name}-cf"
-  aliases                 = [] # e.g., ["app.example.com"]
+  name                    = "ubscrm-cf"
+  aliases                 = [] 
   use_default_certificate = true
   web_acl_arn             = module.waf.web_acl_arn
 
   s3_bucket_name   = module.s3_frontend.bucket_name
-  s3_bucket_region = var.region
+  s3_bucket_region = "ap-southeast-1"
 
   price_class = "PriceClass_100"
 
-  # Optional: route /api/* to your ALB backend
-  enable_api_behavior          = var.enable_api_behavior
-  api_path_pattern             = var.api_path_pattern
-  alb_origin_dns_name          = var.alb_dns_name
-  api_origin_request_policy_id = var.api_origin_request_policy_id
+  #route /api/* to your ALB backend
+  enable_api_behavior          = false
+  api_path_pattern             = "/api/*"
+  alb_origin_dns_name          = ""
+  api_origin_request_policy_id = null
 
-  # Optional logging
-  log_bucket = var.cf_log_bucket
-  log_prefix = "cloudfront/"
 }
 
-# Allow CloudFront (via OAC) to read from the S3 bucket
 data "aws_iam_policy_document" "frontend_oac" {
   statement {
     sid       = "AllowCloudFrontAccessViaOAC"
@@ -213,15 +206,14 @@ resource "aws_s3_bucket_policy" "frontend_oac" {
   policy = data.aws_iam_policy_document.frontend_oac.json
 }
 
-# Build first (optional but handy)
 resource "null_resource" "build_frontend" {
   triggers = {
     # bump this to force a rebuild
-    build_version = var.build_version
+    build_version = "1"
   }
 
   provisioner "local-exec" {
-    working_dir = var.frontend_local_dir
+    working_dir = "../frontend"
     command     = "npm ci && npm run build:static" # produces ./out
   }
 }
@@ -229,14 +221,14 @@ resource "null_resource" "build_frontend" {
 resource "null_resource" "upload_frontend" {
   triggers = {
     build_version = null_resource.build_frontend.triggers.build_version
-    bucket = module.s3_frontend.bucket_name
+    bucket        = module.s3_frontend.bucket_name
   }
 
   depends_on = [null_resource.build_frontend, module.cloudfront, module.s3_frontend]
 
   provisioner "local-exec" {
     # Run the sync from the out/ folder so paths are simple
-    working_dir = "${var.frontend_local_dir}/out"
+    working_dir = "../frontend/out"
     command     = "aws s3 sync . s3://${module.s3_frontend.bucket_name}/ --delete"
   }
 }
@@ -252,68 +244,4 @@ resource "null_resource" "cf_invalidation" {
   provisioner "local-exec" {
     command = "aws cloudfront create-invalidation --distribution-id ${module.cloudfront.distribution_id} --paths '/*'"
   }
-}
-
-
-
-
-# --- Route53 alias (A/AAAA) to CloudFront ---
-# module "route53" {
-#   source = "./modules/route53"
-
-#   hosted_zone_id         = var.hosted_zone_id
-#   record_name            = var.record_name # e.g., "app.example.com"
-#   cloudfront_domain_name = module.cloudfront.domain_name
-# }
-
-
-#VARIABLES might need to move it
-variable "project_name" { type = string }
-variable "region" {
-  type    = string
-  default = "ap-southeast-1"
-}
-
-variable "hosted_zone_id" { type = string } # existing Route 53 zone
-variable "domain_name" { type = string }    # apex used for ACM, e.g., example.com
-variable "alternate_names" {
-  type    = list(string)
-  default = []
-}                                        # e.g., ["app.example.com"]
-variable "record_name" { type = string } # e.g., "app.example.com"
-
-variable "frontend_bucket_name" { type = string }
-
-# Optional logging / API
-variable "cf_log_bucket" {
-  type    = string
-  default = ""
-} # S3 bucket name (no ARN)
-variable "enable_api_behavior" {
-  type    = bool
-  default = false
-}
-variable "api_path_pattern" {
-  type    = string
-  default = "/api/*"
-}
-variable "alb_dns_name" {
-  type    = string
-  default = ""
-} # from your ALB module output, if used
-variable "api_origin_request_policy_id" {
-  type    = string
-  default = null
-}
-
-variable "frontend_local_dir" {
-  type        = string
-  description = "Local path to the site files to upload to S3"
-  default     = "../frontend"
-}
-
-variable "build_version" {
-  type        = string
-  default     = "1" # bump this when you want a new deploy
-  description = "Manual trigger to rebuild/re-upload the frontend"
 }
