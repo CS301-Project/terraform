@@ -1,1 +1,3 @@
-# output "fqdn" { value = aws_route53_record.a_alias.fqdn }
+output "fqdn" {
+  value = aws_route53_record.app_a.fqdn
+}

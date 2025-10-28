@@ -141,6 +141,10 @@ module "ecr" {
   source = "./modules/ecr"
 }
 
+module "acm" {
+  source = "./modules/acm"
+}
+
 module "waf" {
   source    = "./modules/waf"
   providers = { aws = aws.use1 }
@@ -164,14 +168,14 @@ module "cloudfront" {
   source = "./modules/cloudfront"
 
   name                    = "ubscrm-cf"
-  aliases                 = [] 
-  use_default_certificate = true
-  web_acl_arn             = module.waf.web_acl_arn
+  use_default_certificate = false
+  aliases                 = ["itsag3t2.com", "www.itsag3t2.com"]
+  acm_certificate_arn     = module.acm.certificate_arn
 
-  s3_bucket_name   = module.s3_frontend.bucket_name
-  s3_bucket_region = "ap-southeast-1"
-
-  price_class = "PriceClass_100"
+  web_acl_arn       = module.waf.web_acl_arn
+  s3_bucket_name    = module.s3_frontend.bucket_name
+  s3_bucket_region  = "ap-southeast-1"
+  price_class       = "PriceClass_100"
 
   #route /api/* to your ALB backend
   enable_api_behavior          = false
@@ -180,6 +184,21 @@ module "cloudfront" {
   api_origin_request_policy_id = null
 
 }
+
+module "route53_apex" {
+  source = "./modules/route53"
+
+  # Your module already defaults to zone "itsag3t2.com."
+  record_name            = "itsag3t2.com"
+  cloudfront_domain_name = module.cloudfront.domain_name
+}
+
+module "route53_www" {
+  source = "./modules/route53"
+  record_name            = "www.itsag3t2.com"
+  cloudfront_domain_name = module.cloudfront.domain_name
+}
+
 
 data "aws_iam_policy_document" "frontend_oac" {
   statement {

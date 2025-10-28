@@ -55,3 +55,9 @@ variable "rate_limit_requests" {
   type    = number
   default = 1000
 }
+
+variable "acm_certificate_arn" {
+  type    = string
+  default = ""
+  # When use_default_certificate = false, this must be set (us-east-1 cert).
+}

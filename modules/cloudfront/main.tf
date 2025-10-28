@@ -24,7 +24,8 @@ resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   comment             = var.name
   default_root_object = var.default_root_object
-  aliases             = []
+  aliases             = var.aliases
+
 
   origin {
     domain_name              = "${var.s3_bucket_name}.s3.${var.s3_bucket_region}.amazonaws.com"
@@ -84,8 +85,9 @@ resource "aws_cloudfront_distribution" "this" {
   dynamic "viewer_certificate" {
     for_each = var.use_default_certificate ? [] : [1]
     content {
-      ssl_support_method       = "sni-only"
-      minimum_protocol_version = "TLSv1.2_2021"
+    acm_certificate_arn     = var.acm_certificate_arn
+    ssl_support_method      = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
     }
   }
 

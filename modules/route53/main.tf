@@ -1,24 +1,29 @@
-terraform { required_version = ">= 1.5" }
-
-data "aws_route53_zone" "this" {
-  zone_id = var.hosted_zone_id
+data "aws_route53_zone" "primary" {
+  name         = "itsag3t2.com"
+  private_zone = false
 }
 
-locals { cloudfront_zone_id = "Z2FDTNDATAQYW2" }
+locals {
+  cloudfront_zone_id = "Z2FDTNDATAQYW2"
+}
 
-resource "aws_route53_record" "a_alias" {
-  zone_id = data.aws_route53_zone.this.zone_id
+resource "aws_route53_record" "app_a" {
+  zone_id = data.aws_route53_zone.primary.zone_id
   name    = var.record_name
   type    = "A"
   alias {
-    name                   = var.cloudfront_domain_name
+    name                   = var.cloudfront_domain_name   
     zone_id                = local.cloudfront_zone_id
     evaluate_target_health = false
   }
+
+#Won't destroy this by accident
+  lifecycle { prevent_destroy = true }
 }
 
-resource "aws_route53_record" "aaaa_alias" {
-  zone_id = data.aws_route53_zone.this.zone_id
+# AAAA (ALIAS) -> CloudFront
+resource "aws_route53_record" "app_aaaa" {
+  zone_id = data.aws_route53_zone.primary.zone_id
   name    = var.record_name
   type    = "AAAA"
   alias {
@@ -26,5 +31,5 @@ resource "aws_route53_record" "aaaa_alias" {
     zone_id                = local.cloudfront_zone_id
     evaluate_target_health = false
   }
+  lifecycle { prevent_destroy = true }
 }
-
