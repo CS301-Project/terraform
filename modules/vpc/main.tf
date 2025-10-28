@@ -119,3 +119,37 @@ resource "aws_vpc_endpoint" "sts" {
   security_group_ids  = [var.vpc_endpoint_sg_id]
   private_dns_enabled = true
 }
+
+resource "aws_vpc_endpoint" "secretsmanager" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${var.aws_region}.secretsmanager"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.vpc_main_private_ecs_az1.id, aws_subnet.vpc_main_private_ecs_az2.id]
+  security_group_ids  = [var.vpc_endpoint_sg_id]
+  private_dns_enabled = true
+}
+
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.${var.aws_region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [var.private_route_table_id]
+}
+
+resource "aws_vpc_endpoint" "kms" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${var.aws_region}.kms"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.vpc_main_private_ecs_az1.id, aws_subnet.vpc_main_private_ecs_az2.id]
+  security_group_ids  = [var.vpc_endpoint_sg_id]
+  private_dns_enabled = true
+}
+
+resource "aws_vpc_endpoint" "logs" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.ap-southeast-1.logs"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.vpc_main_private_ecs_az1.id, aws_subnet.vpc_main_private_ecs_az2.id]
+  security_group_ids  = [var.vpc_endpoint_sg_id]
+  private_dns_enabled = true
+}

@@ -17,3 +17,8 @@ variable "account_rds_permitted_sgs" {
   description = "List of Security Group IDs allowed to access the Account RDS instance"
   type        = list(string)
 }
+
+variable "ecs_task_execution_role_arn" {
+  description = "ARN of the ECS Task Execution Role"
+  type        = string
+}

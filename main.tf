@@ -1,7 +1,8 @@
 module "vpc" {
-  source             = "./modules/vpc"
-  aws_region         = "ap-southeast-1"
-  vpc_endpoint_sg_id = module.security_groups.vpc_endpoint_sg_id
+  source                 = "./modules/vpc"
+  aws_region             = "ap-southeast-1"
+  vpc_endpoint_sg_id     = module.security_groups.vpc_endpoint_sg_id
+  private_route_table_id = module.network.private_route_table_id
 }
 
 # module "network_acls" {
@@ -34,6 +35,7 @@ module "rds" {
   account_rds_permitted_sgs = [
     module.security_groups.allow_account_ecs_to_account_rds_sg_id
   ]
+  ecs_task_execution_role_arn = module.iam.ecs_task_execution_role_arn
 }
 
 module "elasticache" {
@@ -51,8 +53,14 @@ module "elasticache" {
 }
 
 module "security_groups" {
-  source = "./modules/security_groups"
-  vpc_id = module.vpc.vpc_id
+  source     = "./modules/security_groups"
+  vpc_id     = module.vpc.vpc_id
+  aws_region = "ap-southeast-1"
+  vpc_cidr   = module.vpc.vpc_cidr
+  rds_subnet_cidr_blocks = [
+    module.vpc.rds_backup_subnet_cidr,
+    module.vpc.rds_primary_subnet_cidr
+  ]
 }
 
 # Logging Infrastructure
@@ -79,10 +87,12 @@ module "lambda_logging" {
 }
 
 module "network" {
-  source               = "./modules/network"
-  vpc_id               = module.vpc.vpc_id
-  public_subnet_az1_id = module.vpc.public_subnet_az1_id
-  public_subnet_az2_id = module.vpc.public_subnet_az2_id
+  source                    = "./modules/network"
+  vpc_id                    = module.vpc.vpc_id
+  public_subnet_az1_id      = module.vpc.public_subnet_az1_id
+  public_subnet_az2_id      = module.vpc.public_subnet_az2_id
+  private_ecs_subnet_az1_id = module.vpc.ecs_az1_subnet_id
+  private_ecs_subnet_az2_id = module.vpc.ecs_az2_subnet_id
 }
 
 module "alb" {
@@ -108,47 +118,28 @@ module "ecs_cluster" {
   account_alb_target_group_arn = module.alb.account_alb_target_group_arn
   client_alb_target_group_arn  = module.alb.client_alb_target_group_arn
   ecs_instance_profile_name    = module.iam.ecs_instance_profile_name
+  account_db_endpoint          = module.rds.account_db_endpoint
+  client_db_endpoint           = module.rds.client_db_endpoint
+  account_db_secret_arn        = module.rds.account_db_secret_arn
+  client_db_secret_arn         = module.rds.client_db_secret_arn
+  account_db_username          = module.rds.account_db_username
+  client_db_username           = module.rds.client_db_username
+  client_repository_url        = module.ecr.client_repository_url
+  account_repository_url       = module.ecr.account_repository_url
+  ecs_task_execution_role_arn  = module.iam.ecs_task_execution_role_arn
+
 }
 
 module "iam" {
-  source = "./modules/iam"
+  source                = "./modules/iam"
+  account_db_secret_arn = module.rds.account_db_secret_arn
+  client_db_secret_arn  = module.rds.client_db_secret_arn
+  rds_kms_key_arn       = module.rds.rds_secret_key_id
 }
 
-# --- ACM certificate in us-east-1 for CloudFront (DNS validation in your hosted zone) ---
-# data "aws_route53_zone" "primary" {
-#   zone_id = var.hosted_zone_id
-# }
-
-# #resource "aws_acm_certificate" "cf" {
-#  provider                  = aws.use1
-#  domain_name               = var.domain_name
-#  subject_alternative_names = var.alternate_names
-#  validation_method         = "DNS"
-#  lifecycle { create_before_destroy = true }
-#}
-
-# resource "aws_route53_record" "cert_validation" {
-#   for_each = {
-#     for dvo in aws_acm_certificate.cf.domain_validation_options : dvo.domain_name => {
-#       name    = dvo.resource_record_name
-#       value   = dvo.resource_record_value
-#       type    = dvo.resource_record_type
-#       zone_id = data.aws_route53_zone.primary.zone_id
-#     }
-#   }
-
-#   name    = each.value.name
-#   type    = each.value.type
-#   records = [each.value.value]
-#   ttl     = 60
-#   zone_id = each.value.zone_id
-# }
-
-# resource "aws_acm_certificate_validation" "cf" {
-#   provider                = aws.use1
-#   certificate_arn         = aws_acm_certificate.cf.arn
-#   validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
-# }
+module "ecr" {
+  source = "./modules/ecr"
+}
 
 # --- WAF (global / CLOUDFRONT scope) ---
 module "waf" {

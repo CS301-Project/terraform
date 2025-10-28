@@ -1,8 +1,8 @@
 resource "aws_dynamodb_table" "logs_table" {
-  name           = "application-logs"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "log_id"
-  range_key      = "timestamp"
+  name         = "application-logs"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "log_id"
+  range_key    = "timestamp"
 
   attribute {
     name = "log_id"
