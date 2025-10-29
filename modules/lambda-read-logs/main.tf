@@ -7,11 +7,11 @@ data "archive_file" "lambda_read_logs" {
 resource "aws_lambda_function" "read_logs" {
   filename         = data.archive_file.lambda_read_logs.output_path
   function_name    = "audit-logs-read"
-  role            = aws_iam_role.lambda_read_logs.arn
-  handler         = "lambda_function.lambda_handler"
+  role             = aws_iam_role.lambda_read_logs.arn
+  handler          = "lambda_function.lambda_handler"
   source_code_hash = data.archive_file.lambda_read_logs.output_base64sha256
-  runtime         = "python3.11"
-  timeout         = 30
+  runtime          = "python3.11"
+  timeout          = 30
 
   environment {
     variables = {

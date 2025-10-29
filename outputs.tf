@@ -25,23 +25,9 @@ output "lambda_log_processor_name" {
   value       = module.lambda_logging.lambda_function_name
 }
 
-
-output "cloudfront_domain_name" {
-  value = module.cloudfront.domain_name
-}
-
-output "cloudfront_distribution_id" {
-  value = module.cloudfront.distribution_id
-}
-
-output "frontend_bucket" {
-  value = module.s3_frontend.bucket_name
-}
-
 # output "site_fqdn" {
 #   value = module.route53.fqdn
 # }
-
 
 output "cloudfront_domain_name" {
   value = module.cloudfront.domain_name

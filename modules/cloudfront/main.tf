@@ -1,12 +1,3 @@
-terraform {
-  required_version = ">= 1.5"
-  required_providers {
-    aws = {
-      source = "hashicorp/aws"
-    }
-  }
-}
-
 resource "aws_cloudfront_origin_access_control" "oac" {
   name                              = "${var.name}-oac"
   description                       = "OAC for S3 origin"
@@ -103,3 +94,27 @@ resource "aws_cloudfront_distribution" "this" {
   }
 }
 
+data "aws_iam_policy_document" "frontend_oac" {
+  statement {
+    sid       = "AllowCloudFrontAccessViaOAC"
+    effect    = "Allow"
+    actions   = ["s3:GetObject"]
+    resources = ["${var.s3_frontend_bucket_arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.this.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "frontend_oac" {
+  bucket = var.s3_bucket_name
+  policy = data.aws_iam_policy_document.frontend_oac.json
+}

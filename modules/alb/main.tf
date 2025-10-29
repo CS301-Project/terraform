@@ -80,7 +80,10 @@ resource "aws_lb_listener_rule" "client_rule" {
 
   condition {
     path_pattern {
-      values = ["/client-profile/*"]
+      values = [
+        "/client-profile/*",
+        "/client-profile"
+      ]
     }
   }
 }
@@ -96,7 +99,10 @@ resource "aws_lb_listener_rule" "account_rule" {
 
   condition {
     path_pattern {
-      values = ["/account/*"]
+      values = [
+        "/account/*",
+        "/account"
+      ]
     }
   }
 }

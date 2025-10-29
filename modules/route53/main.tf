@@ -7,9 +7,9 @@ locals {
 
 # A (ALIAS) -> CloudFront
 resource "aws_route53_record" "app_a" {
-  zone_id = local.itsag3t2_zone_id
-  name    = var.record_name
-  type    = "A"
+  zone_id         = local.itsag3t2_zone_id
+  name            = var.record_name
+  type            = "A"
   allow_overwrite = true
   alias {
     name                   = var.cloudfront_domain_name
@@ -22,9 +22,9 @@ resource "aws_route53_record" "app_a" {
 
 # AAAA (ALIAS) -> CloudFront
 resource "aws_route53_record" "app_aaaa" {
-  zone_id = local.itsag3t2_zone_id
-  name    = var.record_name
-  type    = "AAAA"
+  zone_id         = local.itsag3t2_zone_id
+  name            = var.record_name
+  type            = "AAAA"
   allow_overwrite = true
   alias {
     name                   = var.cloudfront_domain_name

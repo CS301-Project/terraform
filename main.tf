@@ -100,9 +100,9 @@ module "lambda_read_logs" {
 }
 
 module "api_gateway" {
-  source                     = "./modules/api-gateway"
-  read_lambda_invoke_arn     = module.lambda_read_logs.lambda_invoke_arn
-  read_lambda_function_name  = module.lambda_read_logs.lambda_function_name
+  source                    = "./modules/api-gateway"
+  read_lambda_invoke_arn    = module.lambda_read_logs.lambda_invoke_arn
+  read_lambda_function_name = module.lambda_read_logs.lambda_function_name
 }
 
 module "network" {
@@ -146,7 +146,8 @@ module "ecs_cluster" {
   client_repository_url        = module.ecr.client_repository_url
   account_repository_url       = module.ecr.account_repository_url
   ecs_task_execution_role_arn  = module.iam.ecs_task_execution_role_arn
-
+  sqs_logging_url              = module.sqs.logging_queue_url
+  ecs_task_role_client_arn     = module.iam.ecs_task_role_client_arn
 }
 
 module "iam" {
@@ -154,6 +155,7 @@ module "iam" {
   account_db_secret_arn = module.rds.account_db_secret_arn
   client_db_secret_arn  = module.rds.client_db_secret_arn
   rds_kms_key_arn       = module.rds.rds_secret_key_id
+  sqs_logging_arn       = module.sqs.logging_queue_arn
 }
 
 module "ecr" {
@@ -202,6 +204,8 @@ module "cloudfront" {
   alb_origin_dns_name          = ""
   api_origin_request_policy_id = null
 
+  s3_frontend_bucket_arn = module.s3_frontend.bucket_arn
+
 }
 
 module "route53_apex" {
@@ -218,70 +222,44 @@ module "route53_www" {
   cloudfront_domain_name = module.cloudfront.domain_name
 }
 
+# resource "null_resource" "build_frontend" {
+#   triggers = {
+#     # bump this to force a rebuild
+#     build_version = "1"
+#   }
 
-data "aws_iam_policy_document" "frontend_oac" {
-  statement {
-    sid       = "AllowCloudFrontAccessViaOAC"
-    effect    = "Allow"
-    actions   = ["s3:GetObject"]
-    resources = ["${module.s3_frontend.bucket_arn}/*"]
+#   provisioner "local-exec" {
+#     working_dir = "../frontend"
+#     command     = "npm ci && npm run build:static" # produces ./out
+#   }
+# }
 
-    principals {
-      type        = "Service"
-      identifiers = ["cloudfront.amazonaws.com"]
-    }
+# resource "null_resource" "upload_frontend" {
+#   triggers = {
+#     build_version = null_resource.build_frontend.triggers.build_version
+#     bucket        = module.s3_frontend.bucket_name
+#   }
 
-    condition {
-      test     = "StringEquals"
-      variable = "AWS:SourceArn"
-      values   = [module.cloudfront.distribution_arn]
-    }
-  }
-}
+#   depends_on = [null_resource.build_frontend, module.cloudfront, module.s3_frontend]
 
-resource "aws_s3_bucket_policy" "frontend_oac" {
-  bucket = module.s3_frontend.bucket_name
-  policy = data.aws_iam_policy_document.frontend_oac.json
-}
+#   provisioner "local-exec" {
+#     # Run the sync from the out/ folder so paths are simple
+#     working_dir = "../frontend/out"
+#     command     = "aws s3 sync . s3://${module.s3_frontend.bucket_name}/ --delete"
+#   }
+# }
 
-resource "null_resource" "build_frontend" {
-  triggers = {
-    # bump this to force a rebuild
-    build_version = "1"
-  }
+# resource "null_resource" "cf_invalidation" {
+#   triggers = {
+#     build_version = null_resource.build_frontend.triggers.build_version
+#     dist_id       = module.cloudfront.distribution_id
+#   }
 
-  provisioner "local-exec" {
-    working_dir = "../frontend"
-    command     = "npm ci && npm run build:static" # produces ./out
-  }
-}
+#   depends_on = [null_resource.upload_frontend, module.cloudfront]
 
-resource "null_resource" "upload_frontend" {
-  triggers = {
-    build_version = null_resource.build_frontend.triggers.build_version
-    bucket        = module.s3_frontend.bucket_name
-  }
-
-  depends_on = [null_resource.build_frontend, module.cloudfront, module.s3_frontend]
-
-  provisioner "local-exec" {
-    # Run the sync from the out/ folder so paths are simple
-    working_dir = "../frontend/out"
-    command     = "aws s3 sync . s3://${module.s3_frontend.bucket_name}/ --delete"
-  }
-}
-
-resource "null_resource" "cf_invalidation" {
-  triggers = {
-    build_version = null_resource.build_frontend.triggers.build_version
-    dist_id       = module.cloudfront.distribution_id
-  }
-
-  depends_on = [null_resource.upload_frontend, module.cloudfront]
-
-  provisioner "local-exec" {
-    interpreter = ["PowerShell", "-Command"]
-    command = "aws cloudfront create-invalidation --distribution-id ${module.cloudfront.distribution_id} --paths '/*'"
-  }
-}
+#   provisioner "local-exec" {
+#     interpreter = ["PowerShell", "-Command"]
+#     command     = "aws cloudfront create-invalidation --distribution-id ${module.cloudfront.distribution_id} --paths '/*'"
+#   }
+# }
 

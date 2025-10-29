@@ -12,3 +12,8 @@ variable "rds_kms_key_arn" {
   description = "ARN of the KMS key used to encrypt RDS secrets"
   type        = string
 }
+
+variable "sqs_logging_arn" {
+  description = "ARN of the SQS queue for logging"
+  type        = string
+}
