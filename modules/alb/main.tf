@@ -82,7 +82,7 @@ resource "aws_lb_listener_rule" "client_rule" {
     path_pattern {
       values = [
         "/client-profile/*",
-      "/client-profile"
+        "/client-profile"
       ]
     }
   }

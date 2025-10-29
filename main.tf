@@ -147,7 +147,7 @@ module "ecs_cluster" {
   account_repository_url       = module.ecr.account_repository_url
   ecs_task_execution_role_arn  = module.iam.ecs_task_execution_role_arn
   sqs_logging_url              = module.sqs.logging_queue_url
-  ecs_task_role_client_arn = module.iam.ecs_task_role_client_arn
+  ecs_task_role_client_arn     = module.iam.ecs_task_role_client_arn
 }
 
 module "iam" {
@@ -155,7 +155,7 @@ module "iam" {
   account_db_secret_arn = module.rds.account_db_secret_arn
   client_db_secret_arn  = module.rds.client_db_secret_arn
   rds_kms_key_arn       = module.rds.rds_secret_key_id
-  sqs_logging_arn = module.sqs.logging_queue_arn
+  sqs_logging_arn       = module.sqs.logging_queue_arn
 }
 
 module "ecr" {

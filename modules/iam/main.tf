@@ -94,7 +94,7 @@ resource "aws_iam_role" "ecs_task_role_client" {
 
 resource "aws_iam_policy" "ecs_task_logging_sqs_policy" {
   name = "ecs-task-sqs-policy"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

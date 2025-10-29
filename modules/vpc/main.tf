@@ -155,10 +155,10 @@ resource "aws_vpc_endpoint" "logs" {
 }
 
 resource "aws_vpc_endpoint" "sqs" {
-  vpc_id            = aws_vpc.main.id
-  service_name      = "com.amazonaws.${var.aws_region}.sqs"
-  vpc_endpoint_type = "Interface"
-  subnet_ids         = [aws_subnet.vpc_main_private_ecs_az1.id, aws_subnet.vpc_main_private_ecs_az2.id]
-  security_group_ids = [var.vpc_endpoint_sg_id]
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${var.aws_region}.sqs"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = [aws_subnet.vpc_main_private_ecs_az1.id, aws_subnet.vpc_main_private_ecs_az2.id]
+  security_group_ids  = [var.vpc_endpoint_sg_id]
   private_dns_enabled = true
 }
