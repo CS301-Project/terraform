@@ -8,8 +8,13 @@ variable "web_acl_arn" {
   default = null
 }
 
-variable "s3_bucket_name" { type = string }
-variable "s3_bucket_region" { type = string }
+variable "s3_bucket_name" {
+  type = string
+}
+
+variable "s3_bucket_region" {
+  type = string
+}
 
 variable "default_root_object" {
   type    = string
@@ -60,4 +65,9 @@ variable "acm_certificate_arn" {
   type    = string
   default = ""
   # When use_default_certificate = false, this must be set (us-east-1 cert).
+}
+
+variable "s3_frontend_bucket_arn" {
+  type        = string
+  description = "The ARN of the S3 bucket used as the CloudFront origin."
 }
