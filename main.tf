@@ -99,10 +99,28 @@ module "lambda_read_logs" {
   ]
 }
 
+module "cognito" {
+  source              = "./modules/cognito"
+  user_pool_domain    = "ubscrm-${data.aws_caller_identity.current.account_id}"
+  environment         = "production"
+  root_admin_email    = "admin@example.com"
+}
+
+module "lambda_cognito" {
+  source         = "./modules/lambda-cognito"
+  user_pool_id   = module.cognito.user_pool_id
+  user_pool_arn  = module.cognito.user_pool_arn
+  client_id      = module.cognito.user_pool_client_id
+  environment    = "production"
+}
+
 module "api_gateway" {
-  source                    = "./modules/api-gateway"
-  read_lambda_invoke_arn    = module.lambda_read_logs.lambda_invoke_arn
-  read_lambda_function_name = module.lambda_read_logs.lambda_function_name
+  source                       = "./modules/api-gateway"
+  read_lambda_invoke_arn       = module.lambda_read_logs.lambda_invoke_arn
+  read_lambda_function_name    = module.lambda_read_logs.lambda_function_name
+  user_pool_arn                = module.cognito.user_pool_arn
+  cognito_lambda_invoke_arn    = module.lambda_cognito.lambda_invoke_arn
+  cognito_lambda_function_name = module.lambda_cognito.lambda_function_name
 }
 
 module "network" {

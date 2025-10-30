@@ -41,3 +41,14 @@ terraform.rc
 
 # Secrets
 .env
+
+# Lambda package directories (created by pip install during terraform apply)
+modules/*/package/
+modules/**/package/
+modules/*/*.zip
+modules/**/*.zip
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
