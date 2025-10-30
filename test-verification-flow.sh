@@ -90,7 +90,7 @@ case $choice in
         
         aws sqs send-message \
             --queue-url "$REQUEST_QUEUE_URL" \
-            --message-body "{\"clientId\":\"$CLIENT_ID\",\"clientEmail\":\"adriankohcl01@gmail.com\",\"agent_id\":\"agent_456\",\"agentEmail\":\"agent@example.com\"}"
+            --message-body "{\"clientId\":\"$CLIENT_ID\",\"clientEmail\":\"adriankohcl01@gmail.com\",\"agent_Id\":\"fraserchua\",\"agentEmail\":\"agent@example.com\"}"
         
         if [ $? -eq 0 ]; then
             echo "✅ Message sent successfully!"
@@ -98,7 +98,7 @@ case $choice in
             echo "📋 Request Details:"
             echo "   Client ID: $CLIENT_ID"
             echo "   Client Email: adriankohcl01@gmail.com"
-            echo "   Agent ID: agent_456"
+            echo "   Agent ID: fraserchua"
             echo ""
             echo "� NEXT STEPS:"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
