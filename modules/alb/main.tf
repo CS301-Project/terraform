@@ -100,8 +100,8 @@ resource "aws_lb_listener_rule" "account_rule" {
   condition {
     path_pattern {
       values = [
-        "/account/*",
-        "/account"
+        "/accounts/*",
+        "/accounts"
       ]
     }
   }

@@ -9,3 +9,7 @@ output "ecs_task_execution_role_arn" {
 output "ecs_task_role_client_arn" {
   value = aws_iam_role.ecs_task_role_client.arn
 }
+
+output "ecs_task_role_account_arn" {
+  value = aws_iam_role.ecs_task_role_account.arn
+}

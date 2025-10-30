@@ -80,3 +80,8 @@ variable "ecs_task_role_client_arn" {
   description = "ARN of the ECS task role for client service"
   type        = string
 }
+
+variable "ecs_task_role_account_arn" {
+  description = "ARN of the ECS task role for account service"
+  type        = string
+}

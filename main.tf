@@ -148,6 +148,7 @@ module "ecs_cluster" {
   ecs_task_execution_role_arn  = module.iam.ecs_task_execution_role_arn
   sqs_logging_url              = module.sqs.logging_queue_url
   ecs_task_role_client_arn     = module.iam.ecs_task_role_client_arn
+  ecs_task_role_account_arn    = module.iam.ecs_task_role_account_arn
 }
 
 module "iam" {
