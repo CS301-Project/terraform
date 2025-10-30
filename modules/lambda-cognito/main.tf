@@ -19,7 +19,13 @@ resource "null_resource" "install_dependencies" {
     command = <<EOF
       rm -rf ${path.module}/package
       mkdir -p ${path.module}/package
-      pip install -r ${path.module}/requirements.txt -t ${path.module}/package --platform manylinux2014_x86_64 --python-version 3.9 --only-binary=:all: --upgrade 
+      python3.9 -m pip install -r ${path.module}/requirements.txt \
+        --target ${path.module}/package \
+        --platform manylinux2014_x86_64 \
+        --implementation cp \
+        --python-version 3.9 \
+        --only-binary=:all: \
+        --upgrade
       cp -r ${path.module}/src/* ${path.module}/package/
     EOF
   }
