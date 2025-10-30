@@ -37,3 +37,8 @@ output "vpc_endpoint_sg_id" {
   description = "Security Group ID for VPC endpoint"
   value       = aws_security_group.vpc_endpoint_sg.id
 }
+
+output "lambda_verification_sg_id" {
+  description = "Security Group ID for verification Lambda functions"
+  value       = aws_security_group.lambda_verification_sg.id
+}

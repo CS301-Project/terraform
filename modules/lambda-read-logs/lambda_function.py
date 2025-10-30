@@ -33,6 +33,7 @@ def lambda_handler(event, context):
             response = table.query(
                 IndexName='AgentIdIndex',
                 KeyConditionExpression=Key('agent_id').eq(agent_id),
+                FilterExpression=Key('attribute_name').eq("Verification Email"),
                 Limit=limit,
                 ScanIndexForward=False  # Most recent first
             )

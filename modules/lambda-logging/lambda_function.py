@@ -52,16 +52,7 @@ def lambda_handler(event, context):
                 'agent_id': body.get('agent_id', 'N/A'),
                 'client_id': body.get('client_id', 'N/A'),
             }
-            
-            # Add operation-specific fields
-            # if crud_operation == 'Update':
-            #     # For Update: store attribute name and values
-            #     log_entry['attribute_name'] = body.get('attribute_name', 'N/A')
-            #     log_entry['before_value'] = body.get('before_value', 'N/A')
-            #     log_entry['after_value'] = body.get('after_value', 'N/A')
-            # else:
-            #     # For Create, Read, Delete: client_id is already in base fields
-            #     # Store attribute_name, before_value, after_value if provided
+        
             log_entry['attribute_name'] = body.get('attribute_name', 'N/A')
             log_entry['before_value'] = body.get('before_value', 'N/A')
             log_entry['after_value'] = body.get('after_value', 'N/A')
