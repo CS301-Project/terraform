@@ -215,12 +215,14 @@ module "route53_apex" {
   # Your module already defaults to zone "itsag3t2.com."
   record_name            = "itsag3t2.com"
   cloudfront_domain_name = module.cloudfront.domain_name
+  depends_on             = [module.cloudfront]
 }
 
 module "route53_www" {
   source                 = "./modules/route53"
   record_name            = "www.itsag3t2.com"
   cloudfront_domain_name = module.cloudfront.domain_name
+  depends_on             = [module.cloudfront]
 }
 
 # resource "null_resource" "build_frontend" {
