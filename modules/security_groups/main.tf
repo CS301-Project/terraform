@@ -217,3 +217,23 @@ resource "aws_security_group_rule" "client_ecs_egress_dns" {
   cidr_blocks       = [var.vpc_cidr]
   description       = "Allow DNS resolution within VPC"
 }
+
+# Security group for verification Lambda functions
+resource "aws_security_group" "lambda_verification_sg" {
+  name        = "lambda-verification-sg"
+  description = "Security Group for verification Lambda functions"
+  vpc_id      = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
+  }
+
+  tags = {
+    Name        = "lambda-verification-sg"
+    Environment = "production"
+  }
+}

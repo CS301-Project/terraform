@@ -166,6 +166,7 @@ module "ecs_cluster" {
   ecs_task_execution_role_arn  = module.iam.ecs_task_execution_role_arn
   sqs_logging_url              = module.sqs.logging_queue_url
   ecs_task_role_client_arn     = module.iam.ecs_task_role_client_arn
+  ecs_task_role_account_arn    = module.iam.ecs_task_role_account_arn
 }
 
 module "iam" {
@@ -174,6 +175,9 @@ module "iam" {
   client_db_secret_arn  = module.rds.client_db_secret_arn
   rds_kms_key_arn       = module.rds.rds_secret_key_id
   sqs_logging_arn       = module.sqs.logging_queue_arn
+  # Verification queue ARNs for Client ECS
+  verification_request_queue_arn = module.sqs.verification_request_queue_arn
+  verification_results_queue_arn = module.sqs.verification_results_queue_arn
 }
 
 module "ecr" {
@@ -239,6 +243,83 @@ module "route53_www" {
   record_name            = "www.itsag3t2.com"
   cloudfront_domain_name = module.cloudfront.domain_name
 }
+
+# ================== VERIFICATION FLOW MODULES ==================
+
+# SNS Topic for Textract notifications
+module "sns_textract" {
+  source            = "./modules/sns"
+  topic_name        = "textract-completion-topic"
+  enable_encryption = false
+}
+
+# SES for verification emails
+module "ses_verification" {
+  source                = "./modules/ses"
+  sender_email          = "fraser.chua.2022@scis.smu.edu.sg"  # Update with your verified email
+  domain_name           = "itsag3t2.com"
+  application_name      = "UBSCRM"
+  enable_event_tracking = false
+}
+
+# S3 bucket for document uploads
+module "s3_document_verification" {
+  source = "./modules/s3-document-verification"
+
+  bucket_name                 = "ubscrm-document-verification"
+  enable_versioning           = true
+  force_destroy               = false
+  allowed_origins             = ["https://itsag3t2.com", "https://www.itsag3t2.com"]
+  document_ingest_lambda_arn  = module.lambda_document_ingest.function_arn
+  lambda_permission_id        = module.lambda_document_ingest.lambda_permission_id
+  filter_prefix               = "documents/"
+  filter_suffix               = ""
+}
+
+# Lambda: Email Sender
+module "lambda_email_sender" {
+  source = "./modules/lambda-email-sender"
+
+  function_name              = "email-sender-lambda"
+  sqs_queue_arn              = module.sqs.verification_request_queue_arn
+  s3_bucket_arn              = module.s3_document_verification.bucket_arn
+  bucket_name                = module.s3_document_verification.bucket_name
+  sender_email               = module.ses_verification.sender_email
+  template_name              = module.ses_verification.template_name
+  presigned_url_expiration   = 86400  # 24 hours
+  configuration_set          = module.ses_verification.configuration_set_name
+  subnet_ids                 = [module.vpc.ecs_az1_subnet_id, module.vpc.ecs_az2_subnet_id]
+  security_group_ids         = [module.security_groups.lambda_verification_sg_id]
+  batch_size                 = 10
+  # Logging configuration
+  logging_queue_arn          = module.sqs.logging_queue_arn
+  logging_queue_url          = module.sqs.logging_queue_url
+}
+
+# Lambda: Document Ingest
+module "lambda_document_ingest" {
+  source = "./modules/lambda-document-ingest"
+
+  function_name      = "document-ingest-lambda"
+  s3_bucket_arn      = module.s3_document_verification.bucket_arn
+  sns_topic_arn      = module.sns_textract.topic_arn
+  subnet_ids         = [module.vpc.ecs_az1_subnet_id, module.vpc.ecs_az2_subnet_id]
+  security_group_ids = [module.security_groups.lambda_verification_sg_id]
+}
+
+# Lambda: Textract Result Handler
+module "lambda_textract_result" {
+  source = "./modules/lambda-textract-result"
+
+  function_name                   = "textract-result-lambda"
+  sns_topic_arn                   = module.sns_textract.topic_arn
+  verification_results_queue_arn  = module.sqs.verification_results_queue_arn
+  verification_results_queue_url  = module.sqs.verification_results_queue_url
+  subnet_ids                      = [module.vpc.ecs_az1_subnet_id, module.vpc.ecs_az2_subnet_id]
+  security_group_ids              = [module.security_groups.lambda_verification_sg_id]
+}
+
+# ================== END VERIFICATION FLOW MODULES ==================
 
 # resource "null_resource" "build_frontend" {
 #   triggers = {
