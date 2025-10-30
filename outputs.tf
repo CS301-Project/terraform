@@ -47,10 +47,31 @@ output "frontend_bucket" {
 
 output "api_endpoint" {
   description = "API Gateway endpoint URL for reading logs"
-  value       = module.api_gateway.api_endpoint
+  value       = module.api_gateway.api_invoke_url
 }
 
 output "api_id" {
   description = "API Gateway REST API ID"
   value       = module.api_gateway.api_id
+}
+
+# Cognito Outputs
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  value       = module.cognito.user_pool_id
+}
+
+output "cognito_user_pool_domain" {
+  description = "Cognito User Pool Domain"
+  value       = module.cognito.user_pool_domain
+}
+
+output "cognito_login_endpoint" {
+  description = "Cognito login endpoint URL"
+  value       = "https://${module.cognito.user_pool_domain}.auth.ap-southeast-1.amazoncognito.com/login"
+}
+
+output "cognito_token_endpoint" {
+  description = "Cognito OAuth token endpoint"
+  value       = "https://${module.cognito.user_pool_domain}.auth.ap-southeast-1.amazoncognito.com/oauth2/token"
 }
