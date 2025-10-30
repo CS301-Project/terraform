@@ -70,6 +70,13 @@ def start_textract_analysis(bucket_name, object_key, client_id):
     Start asynchronous Textract document analysis.
     """
     try:
+        import hashlib
+        import time
+        
+        # Create a valid ClientRequestToken (max 64 chars, alphanumeric + hyphens)
+        token_base = f"{client_id}-{int(time.time())}"
+        client_token = hashlib.md5(token_base.encode()).hexdigest()[:32]
+        
         response = textract.start_document_analysis(
             DocumentLocation={
                 'S3Object': {
@@ -82,12 +89,8 @@ def start_textract_analysis(bucket_name, object_key, client_id):
                 'SNSTopicArn': SNS_TOPIC_ARN,
                 'RoleArn': SNS_ROLE_ARN
             },
-            ClientRequestToken=f"{client_id}-{object_key.split('/')[-1]}",  # Idempotency
-            JobTag=json.dumps({
-                'clientId': client_id,
-                'bucket': bucket_name,
-                'key': object_key
-            })
+            ClientRequestToken=client_token,
+            JobTag=client_id  # Simple string, not JSON
         )
         return response
         

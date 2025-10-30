@@ -142,12 +142,7 @@ resource "aws_lambda_function" "document_ingest" {
       SNS_ROLE_ARN  = aws_iam_role.textract_sns_role.arn
     }
   }
-
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_group_ids
-  }
-
+  
   tags = {
     Name        = var.function_name
     Environment = "production"

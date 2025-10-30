@@ -80,22 +80,75 @@ def lambda_handler(event, context):
 
 def generate_presigned_url(bucket_name, object_key, expiration=None):
     """
-    Generate a presigned URL for uploading to S3.
+    Generate a presigned POST for uploading to S3 with HTML form.
+    Returns an HTML form that can be used directly in the browser.
     """
     if expiration is None:
         expiration = PRESIGNED_URL_EXPIRATION
     
     try:
-        presigned_url = s3.generate_presigned_url(
-            'put_object',
-            Params={
-                'Bucket': bucket_name,
-                'Key': object_key,
-                'ContentType': 'application/pdf'  # Adjust as needed
+        # Generate presigned POST
+        success_url = f'https://{bucket_name}.s3.amazonaws.com/upload-success.html'
+        presigned_post = s3.generate_presigned_post(
+            Bucket=bucket_name,
+            Key=object_key,
+            Fields={
+                'Content-Type': 'application/pdf',
+                'success_action_redirect': success_url
             },
+            Conditions=[
+                {'Content-Type': 'application/pdf'},
+                {'success_action_redirect': success_url},
+                ['content-length-range', 1, 10485760]  # 1 byte to 10MB
+            ],
             ExpiresIn=expiration
         )
-        return presigned_url
+        
+        # Create HTML form
+        html_form = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Document Upload</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }}
+        h1 {{ color: #333; }}
+        .upload-box {{ border: 2px dashed #ccc; padding: 30px; text-align: center; }}
+        input[type="file"] {{ margin: 20px 0; }}
+        button {{ background: #007bff; color: white; padding: 10px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }}
+        button:hover {{ background: #0056b3; }}
+    </style>
+</head>
+<body>
+    <h1>Upload Your Verification Document</h1>
+    <form action="{presigned_post['url']}" method="post" enctype="multipart/form-data">
+"""
+        for key, value in presigned_post['fields'].items():
+            html_form += f'        <input type="hidden" name="{key}" value="{value}" />\n'
+        
+        html_form += """        <div class="upload-box">
+            <p>Please select your PDF document (max 10MB)</p>
+            <input type="file" name="file" accept=".pdf" required />
+            <br><br>
+            <button type="submit">Upload Document</button>
+        </div>
+    </form>
+</body>
+</html>
+"""
+        
+        # Upload HTML form to S3 and return its URL
+        form_key = f"upload-forms/{object_key.replace('documents/', '').replace('.pdf', '')}.html"
+        s3.put_object(
+            Bucket=bucket_name,
+            Key=form_key,
+            Body=html_form.encode('utf-8'),
+            ContentType='text/html'
+        )
+        
+        form_url = f"https://{bucket_name}.s3.amazonaws.com/{form_key}"
+        return form_url
+        
     except ClientError as e:
         print(f"Error generating presigned URL: {str(e)}")
         return None

@@ -32,9 +32,8 @@ def lambda_handler(event, context):
                 print(f"Textract job {job_id} did not succeed. Status: {status}")
                 continue
             
-            # Parse job tag to get client info
-            job_metadata = json.loads(job_tag) if job_tag else {}
-            client_id = job_metadata.get('clientId')
+            # JobTag is now just the client_id (simple string, not JSON)
+            client_id = job_tag
             
             if not client_id:
                 print(f"No client ID found in job tag: {job_tag}")
@@ -48,7 +47,7 @@ def lambda_handler(event, context):
                 continue
             
             # Send results to verification results queue
-            send_to_verification_queue(client_id, extracted_data, job_metadata)
+            send_to_verification_queue(client_id, extracted_data)
             
             print(f"Successfully processed Textract results for client {client_id}")
             
@@ -155,16 +154,17 @@ def get_text_from_block(block, block_map):
                         text += child.get('Text', '') + ' '
     return text.strip()
 
-def send_to_verification_queue(client_id, extracted_data, metadata):
+def send_to_verification_queue(client_id, extracted_data):
     """
     Send extracted data to verification results SQS queue.
     """
     try:
+        from datetime import datetime
+        
         message = {
             'clientId': client_id,
             'extractedData': extracted_data,
-            'metadata': metadata,
-            'timestamp': str(boto3.Session().resource('s3').meta.client.meta.events._unique_id)
+            'timestamp': datetime.utcnow().isoformat() + 'Z'
         }
         
         response = sqs.send_message(

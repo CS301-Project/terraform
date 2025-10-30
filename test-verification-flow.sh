@@ -13,7 +13,7 @@ REGION="ap-southeast-1"
 REQUEST_QUEUE_URL="https://sqs.$REGION.amazonaws.com/$ACCOUNT_ID/verification-request-queue"
 RESULTS_QUEUE_URL="https://sqs.$REGION.amazonaws.com/$ACCOUNT_ID/verification-results-queue"
 
-echo "📧 Test Email: adriankohcl01@gmail.com"
+echo "📧 Test Email: fraser.chua.2022@scis.smu.edu.sg"
 echo "🌍 Region: $REGION"
 echo "🆔 Account: $ACCOUNT_ID"
 echo ""
