@@ -1,6 +1,6 @@
-variable "sender_email" {
-  description = "Email address to send verification emails from (must be verified in SES)"
-  type        = string
+variable "verified_email_identities" {
+  description = "List of email addresses to verify in SES (for dynamic sender selection)"
+  type        = list(string)
 }
 
 variable "domain_name" {

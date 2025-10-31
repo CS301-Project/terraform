@@ -75,3 +75,24 @@ output "cognito_token_endpoint" {
   description = "Cognito OAuth token endpoint"
   value       = "https://${module.cognito.user_pool_domain}.auth.ap-southeast-1.amazoncognito.com/oauth2/token"
 }
+
+# Verification Queue Outputs
+output "verification_request_queue_url" {
+  description = "URL of the verification request SQS queue - Your backend publishes verification requests here"
+  value       = module.sqs.verification_request_queue_url
+}
+
+output "verification_results_queue_url" {
+  description = "URL of the verification results SQS queue - Your backend polls this queue for Textract results"
+  value       = module.sqs.verification_results_queue_url
+}
+
+output "verification_request_queue_arn" {
+  description = "ARN of the verification request SQS queue"
+  value       = module.sqs.verification_request_queue_arn
+}
+
+output "verification_results_queue_arn" {
+  description = "ARN of the verification results SQS queue"
+  value       = module.sqs.verification_results_queue_arn
+}

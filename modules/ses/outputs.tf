@@ -1,11 +1,11 @@
-output "sender_email" {
-  description = "Verified sender email address"
-  value       = aws_ses_email_identity.sender.email
+output "verified_email_identities" {
+  description = "List of verified email addresses"
+  value       = [for identity in aws_ses_email_identity.verified_senders : identity.email]
 }
 
-output "sender_email_arn" {
-  description = "ARN of the verified email identity"
-  value       = aws_ses_email_identity.sender.arn
+output "verified_email_arns" {
+  description = "Map of verified email identities and their ARNs"
+  value       = { for k, v in aws_ses_email_identity.verified_senders : k => v.arn }
 }
 
 output "domain_identity_arn" {

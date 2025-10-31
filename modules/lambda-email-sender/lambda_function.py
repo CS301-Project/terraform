@@ -11,7 +11,6 @@ ses = boto3.client('ses')
 
 # Environment variables
 BUCKET_NAME = os.environ['BUCKET_NAME']
-SENDER_EMAIL = os.environ['SENDER_EMAIL']
 TEMPLATE_NAME = os.environ.get('TEMPLATE_NAME', 'verification-email-template')
 PRESIGNED_URL_EXPIRATION = int(os.environ.get('PRESIGNED_URL_EXPIRATION', '86400'))  # 24 hours default
 CONFIGURATION_SET = os.environ.get('CONFIGURATION_SET', '')
@@ -34,11 +33,11 @@ def lambda_handler(event, context):
             agent_id = message_body.get('agent_Id')
             agent_email = message_body.get('agentEmail')
             
-            if not client_id or not client_email:
-                print(f"Invalid message format: {message_body}")
+            if not client_id or not client_email or not agent_email:
+                print(f"Invalid message format - missing required fields: {message_body}")
                 continue
             
-            print(f"Processing verification request for client: {client_id}, email: {client_email}")
+            print(f"Processing verification request for client: {client_id}, email: {client_email}, from agent: {agent_email}")
             
             # Generate presigned URL for document upload
             object_key = f"documents/{client_id}/{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
@@ -52,7 +51,8 @@ def lambda_handler(event, context):
             message_id = send_verification_email(
                 recipient_email=client_email,
                 client_id=client_id,
-                upload_url=presigned_url
+                upload_url=presigned_url,
+                sender_email=agent_email
             )
             
             print(f"Successfully sent verification email to {client_email}")
@@ -87,6 +87,9 @@ def generate_presigned_url(bucket_name, object_key, expiration=None):
         expiration = PRESIGNED_URL_EXPIRATION
     
     try:
+        # Create success page (once per Lambda execution)
+        create_success_page(bucket_name)
+        
         # Generate presigned POST
         success_url = f'https://{bucket_name}.s3.amazonaws.com/upload-success.html'
         presigned_post = s3.generate_presigned_post(
@@ -127,7 +130,7 @@ def generate_presigned_url(bucket_name, object_key, expiration=None):
             html_form += f'        <input type="hidden" name="{key}" value="{value}" />\n'
         
         html_form += """        <div class="upload-box">
-            <p>Please select your PDF document (max 10MB)</p>
+            <p>Please select your PDF NRIC Document (max 10MB)</p>
             <input type="file" name="file" accept=".pdf" required />
             <br><br>
             <button type="submit">Upload Document</button>
@@ -153,7 +156,103 @@ def generate_presigned_url(bucket_name, object_key, expiration=None):
         print(f"Error generating presigned URL: {str(e)}")
         return None
 
-def send_verification_email(recipient_email, client_id, upload_url):
+def create_success_page(bucket_name):
+    """
+    Create and upload a success page to S3 (if it doesn't exist).
+    This page is shown after successful document upload.
+    """
+    try:
+        # Check if success page already exists
+        try:
+            s3.head_object(Bucket=bucket_name, Key='upload-success.html')
+            print("Success page already exists, skipping creation")
+            return
+        except ClientError as e:
+            if e.response['Error']['Code'] != '404':
+                raise
+            # File doesn't exist, create it
+        
+        success_html = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Successful</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .success-box {
+            background-color: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 40px;
+            margin: 20px 0;
+        }
+        .success-icon {
+            font-size: 64px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #155724;
+            margin: 20px 0;
+        }
+        p {
+            color: #155724;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        .info-box {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 30px;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-box">
+        <div class="success-icon">✓</div>
+        <h1>Document Uploaded Successfully!</h1>
+        <p>Thank you for uploading your verification document.</p>
+        <p>We have received your document and it is now being processed.</p>
+    </div>
+    
+    <div class="info-box">
+        <p><strong>What happens next?</strong></p>
+<p>Our safe and secure AI checker will review your document and try to verify your identity! If there are any issues, your agent will contact you accordingly</p>
+    </div>
+    
+    <p style="color: #666; margin-top: 40px; font-size: 14px;">
+        You can safely close this window.
+    </p>
+</body>
+</html>
+"""
+        
+        # Upload success page to S3
+        s3.put_object(
+            Bucket=bucket_name,
+            Key='upload-success.html',
+            Body=success_html.encode('utf-8'),
+            ContentType='text/html',
+            CacheControl='max-age=3600'  # Cache for 1 hour
+        )
+        
+        print("Success page created and uploaded to S3")
+        
+    except ClientError as e:
+        print(f"Error creating success page: {str(e)}")
+        # Don't raise - this shouldn't break the main flow
+
+def send_verification_email(recipient_email, client_id, upload_url, sender_email):
     """
     Send verification email using SES template.
     """
@@ -162,7 +261,7 @@ def send_verification_email(recipient_email, client_id, upload_url):
     
     try:
         params = {
-            'Source': SENDER_EMAIL,
+            'Source': sender_email,
             'Destination': {
                 'ToAddresses': [recipient_email]
             },
@@ -216,4 +315,3 @@ def send_log_to_sqs(crud_operation, attribute_name, before_value, after_value, a
         
     except ClientError as e:
         print(f"Error sending log to SQS: {str(e)}")
-        # Don't raise - logging failure shouldn't break the main flow

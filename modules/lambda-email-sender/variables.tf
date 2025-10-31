@@ -19,11 +19,6 @@ variable "bucket_name" {
   type        = string
 }
 
-variable "sender_email" {
-  description = "Verified sender email address in SES"
-  type        = string
-}
-
 variable "template_name" {
   description = "Name of the SES email template"
   type        = string

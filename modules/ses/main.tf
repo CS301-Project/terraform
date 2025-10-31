@@ -1,5 +1,7 @@
-resource "aws_ses_email_identity" "sender" {
-  email = var.sender_email
+# Verify multiple email identities for dynamic sender selection
+resource "aws_ses_email_identity" "verified_senders" {
+  for_each = toset(var.verified_email_identities)
+  email    = each.value
 }
 
 # Optional: Domain identity instead of email

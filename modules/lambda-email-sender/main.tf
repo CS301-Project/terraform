@@ -103,18 +103,12 @@ resource "aws_lambda_function" "email_sender" {
   environment {
     variables = {
       BUCKET_NAME               = var.bucket_name
-      SENDER_EMAIL              = var.sender_email
       TEMPLATE_NAME             = var.template_name
       PRESIGNED_URL_EXPIRATION  = var.presigned_url_expiration
       CONFIGURATION_SET         = var.configuration_set
       LOGGING_QUEUE_URL         = var.logging_queue_url
     }
   }
-
-#   vpc_config {
-#     subnet_ids         = var.subnet_ids
-#     security_group_ids = var.security_group_ids
-#   }
 
   tags = {
     Name        = var.function_name

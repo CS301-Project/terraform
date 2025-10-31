@@ -16,7 +16,7 @@ resource "aws_s3_bucket_public_access_block" "document_verification" {
   restrict_public_buckets = false
 }
 
-# Bucket policy to allow public read access to upload forms
+# Bucket policy to allow public read access to upload forms and success page
 resource "aws_s3_bucket_policy" "document_verification" {
   bucket = aws_s3_bucket.document_verification.id
 
@@ -29,6 +29,13 @@ resource "aws_s3_bucket_policy" "document_verification" {
         Principal = "*"
         Action    = "s3:GetObject"
         Resource  = "${aws_s3_bucket.document_verification.arn}/upload-forms/*"
+      },
+      {
+        Sid       = "PublicReadSuccessPage"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.document_verification.arn}/upload-success.html"
       }
     ]
   })

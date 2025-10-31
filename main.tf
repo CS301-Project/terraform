@@ -255,8 +255,10 @@ module "sns_textract" {
 
 # SES for verification emails
 module "ses_verification" {
-  source                = "./modules/ses"
-  sender_email          = "fraser.chua.2022@scis.smu.edu.sg"  # Update with your verified email
+  source = "./modules/ses"
+  verified_email_identities = [
+    "adrian.koh.2022@scis.smu.edu.sg"
+  ]
   domain_name           = "itsag3t2.com"
   application_name      = "UBSCRM"
   enable_event_tracking = false
@@ -265,10 +267,9 @@ module "ses_verification" {
 # S3 bucket for document uploads
 module "s3_document_verification" {
   source = "./modules/s3-document-verification"
-
   bucket_name                 = "ubscrm-document-verification"
   enable_versioning           = true
-  force_destroy               = false
+  force_destroy               = true
   allowed_origins             = ["https://itsag3t2.com", "https://www.itsag3t2.com"]
   document_ingest_lambda_arn  = module.lambda_document_ingest.function_arn
   lambda_permission_id        = module.lambda_document_ingest.lambda_permission_id
@@ -279,12 +280,10 @@ module "s3_document_verification" {
 # Lambda: Email Sender
 module "lambda_email_sender" {
   source = "./modules/lambda-email-sender"
-
   function_name              = "email-sender-lambda"
   sqs_queue_arn              = module.sqs.verification_request_queue_arn
   s3_bucket_arn              = module.s3_document_verification.bucket_arn
   bucket_name                = module.s3_document_verification.bucket_name
-  sender_email               = module.ses_verification.sender_email
   template_name              = module.ses_verification.template_name
   presigned_url_expiration   = 86400  # 24 hours
   configuration_set          = module.ses_verification.configuration_set_name
@@ -299,7 +298,6 @@ module "lambda_email_sender" {
 # Lambda: Document Ingest
 module "lambda_document_ingest" {
   source = "./modules/lambda-document-ingest"
-
   function_name      = "document-ingest-lambda"
   s3_bucket_arn      = module.s3_document_verification.bucket_arn
   sns_topic_arn      = module.sns_textract.topic_arn
@@ -310,7 +308,6 @@ module "lambda_document_ingest" {
 # Lambda: Textract Result Handler
 module "lambda_textract_result" {
   source = "./modules/lambda-textract-result"
-
   function_name                   = "textract-result-lambda"
   sns_topic_arn                   = module.sns_textract.topic_arn
   verification_results_queue_arn  = module.sqs.verification_results_queue_arn
