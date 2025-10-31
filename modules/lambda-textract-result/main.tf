@@ -50,6 +50,13 @@ resource "aws_iam_policy" "textract_result_lambda_policy" {
       {
         Effect = "Allow"
         Action = [
+          "s3:DeleteObject"
+        ]
+        Resource = "${var.document_bucket_arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "ec2:CreateNetworkInterface",
           "ec2:DescribeNetworkInterfaces",
           "ec2:DeleteNetworkInterface"

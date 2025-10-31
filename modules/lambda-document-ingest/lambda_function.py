@@ -77,6 +77,10 @@ def start_textract_analysis(bucket_name, object_key, client_id):
         token_base = f"{client_id}-{int(time.time())}"
         client_token = hashlib.md5(token_base.encode()).hexdigest()[:32]
         
+        # Include bucket and key in JobTag for later S3 deletion
+        # Format: clientId|bucket|key (pipe-delimited for easy parsing)
+        job_tag = f"{client_id}|{bucket_name}|{object_key}"
+        
         response = textract.start_document_analysis(
             DocumentLocation={
                 'S3Object': {
@@ -90,7 +94,7 @@ def start_textract_analysis(bucket_name, object_key, client_id):
                 'RoleArn': SNS_ROLE_ARN
             },
             ClientRequestToken=client_token,
-            JobTag=client_id  # Simple string, not JSON
+            JobTag=job_tag
         )
         return response
         
@@ -122,15 +126,14 @@ def analyze_document_sync(bucket_name, object_key, client_id):
         
         # Manually trigger SNS notification with the results
         # This simulates the async flow for consistency
+        # Use same JobTag format as async: clientId|bucket|key
+        job_tag = f"{client_id}|{bucket_name}|{object_key}"
+        
         sns_message = {
             'JobId': 'sync-' + client_id,
             'Status': 'SUCCEEDED',
             'API': 'AnalyzeDocument',
-            'JobTag': json.dumps({
-                'clientId': client_id,
-                'bucket': bucket_name,
-                'key': object_key
-            }),
+            'JobTag': job_tag,
             'DocumentLocation': {
                 'S3ObjectName': object_key,
                 'S3Bucket': bucket_name

@@ -312,6 +312,7 @@ module "lambda_textract_result" {
   sns_topic_arn                   = module.sns_textract.topic_arn
   verification_results_queue_arn  = module.sqs.verification_results_queue_arn
   verification_results_queue_url  = module.sqs.verification_results_queue_url
+  document_bucket_arn             = module.s3_document_verification.bucket_arn
   subnet_ids                      = [module.vpc.ecs_az1_subnet_id, module.vpc.ecs_az2_subnet_id]
   security_group_ids              = [module.security_groups.lambda_verification_sg_id]
 }

@@ -28,3 +28,8 @@ variable "security_group_ids" {
   description = "List of security group IDs for Lambda"
   type        = list(string)
 }
+
+variable "document_bucket_arn" {
+  description = "ARN of the S3 bucket containing documents to be deleted after processing"
+  type        = string
+}

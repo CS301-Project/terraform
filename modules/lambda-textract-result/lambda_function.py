@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 # Initialize AWS clients
 textract = boto3.client('textract')
 sqs = boto3.client('sqs')
+s3 = boto3.client('s3')
 
 # Environment variables
 VERIFICATION_RESULTS_QUEUE_URL = os.environ['VERIFICATION_RESULTS_QUEUE_URL']
@@ -32,8 +33,16 @@ def lambda_handler(event, context):
                 print(f"Textract job {job_id} did not succeed. Status: {status}")
                 continue
             
-            # JobTag is now just the client_id (simple string, not JSON)
-            client_id = job_tag
+            # JobTag format: clientId|bucket|key (pipe-delimited)
+            job_tag_parts = job_tag.split('|') if job_tag else []
+            
+            if len(job_tag_parts) != 3:
+                print(f"Invalid job tag format: {job_tag}. Expected: clientId|bucket|key")
+                continue
+            
+            client_id, bucket_name, object_key = job_tag_parts
+            
+            print(f"Extracted from JobTag - ClientId: {client_id}, Bucket: {bucket_name}, Key: {object_key}")
             
             if not client_id:
                 print(f"No client ID found in job tag: {job_tag}")
@@ -48,6 +57,9 @@ def lambda_handler(event, context):
             
             # Send results to verification results queue
             send_to_verification_queue(client_id, extracted_data)
+            
+            # Delete the document from S3 after successful processing
+            delete_s3_document(bucket_name, object_key)
             
             print(f"Successfully processed Textract results for client {client_id}")
             
@@ -178,3 +190,24 @@ def send_to_verification_queue(client_id, extracted_data):
     except ClientError as e:
         print(f"Error sending message to SQS: {str(e)}")
         raise
+
+def delete_s3_document(bucket_name, object_key):
+    """
+    Delete the processed document from S3 after Textract analysis is complete.
+    """
+    try:
+        print(f"Deleting document from S3: s3://{bucket_name}/{object_key}")
+        
+        s3.delete_object(
+            Bucket=bucket_name,
+            Key=object_key
+        )
+        
+        print(f"Successfully deleted document: {object_key}")
+        return True
+        
+    except ClientError as e:
+        print(f"Error deleting S3 object: {str(e)}")
+        # Don't raise the exception - we don't want to fail the Lambda if deletion fails
+        # The document will remain in S3 but processing can continue
+        return False
