@@ -75,3 +75,9 @@ output "cognito_token_endpoint" {
   description = "Cognito OAuth token endpoint"
   value       = "https://${module.cognito.user_pool_domain}.auth.ap-southeast-1.amazoncognito.com/oauth2/token"
 }
+
+output "root_admin_permanent_password" {
+  description = "Permanent password for root_admin user (username: root_admin, email: admin@example.com) - use to login directly, no password change required"
+  value       = module.cognito.root_admin_permanent_password
+  sensitive   = true
+}

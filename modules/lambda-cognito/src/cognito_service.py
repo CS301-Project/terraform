@@ -599,6 +599,74 @@ class CognitoService:
             logger.exception("Unexpected error refreshing tokens")
             raise
 
+    def respond_to_challenge(self, challenge_name: str, session: str, username: str, new_password: str) -> Dict[str, Any]:
+        """
+        Respond to authentication challenge (e.g., NEW_PASSWORD_REQUIRED)
+
+        Args:
+            challenge_name: Name of the challenge (e.g., 'NEW_PASSWORD_REQUIRED')
+            session: Session token from initial login attempt
+            username: Username (email) of the user
+            new_password: New password to set
+
+        Returns:
+            Dict with authentication tokens
+
+        Raises:
+            ClientError: If challenge response fails
+        """
+        try:
+            logger.info(f"Responding to challenge {challenge_name} for user {username}")
+
+            # Build parameters for challenge response
+            params = {
+                'ClientId': self.client_id,
+                'ChallengeName': challenge_name,
+                'Session': session,
+                'ChallengeResponses': {
+                    'USERNAME': username,
+                    'PASSWORD': new_password
+                }
+            }
+
+            # Respond to authentication challenge
+            response = self.client.respond_to_auth_challenge(**params)
+
+            # Check if another challenge is required
+            if 'ChallengeName' in response:
+                challenge_name = response['ChallengeName']
+                logger.warning(f"Another challenge required after response: {challenge_name}")
+                return {
+                    "challenge": challenge_name,
+                    "session": response.get('Session'),
+                    "challenge_parameters": response.get('ChallengeParameters', {})
+                }
+
+            # Extract authentication result
+            auth_result = response.get('AuthenticationResult', {})
+
+            logger.info(f"Challenge response successful for user {username}")
+
+            return {
+                "success": True,
+                "access_token": auth_result.get('AccessToken'),
+                "id_token": auth_result.get('IdToken'),
+                "refresh_token": auth_result.get('RefreshToken'),
+                "expires_in": auth_result.get('ExpiresIn'),
+                "token_type": auth_result.get('TokenType', 'Bearer')
+            }
+
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            logger.error(f"Cognito error responding to challenge for {username}: {error_code} - {error_message}")
+
+            # Re-raise with original error for handler to process
+            raise
+        except Exception as e:
+            logger.exception(f"Unexpected error responding to challenge for {username}")
+            raise
+
     def logout(self, access_token: str) -> Dict[str, Any]:
         """
         Sign out user and revoke tokens

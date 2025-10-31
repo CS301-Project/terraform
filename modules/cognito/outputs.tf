@@ -32,3 +32,9 @@ output "agent_group_id" {
   description = "ID of the agent group"
   value       = aws_cognito_user_group.agent.id
 }
+
+output "root_admin_permanent_password" {
+  description = "Permanent password for root_admin user (use to login directly, no password change required)"
+  value       = random_password.root_admin_permanent.result
+  sensitive   = true
+}

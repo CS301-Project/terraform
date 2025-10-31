@@ -26,6 +26,7 @@ from models import (
     ForgotPasswordRequest, ForgotPasswordResponse,
     ConfirmForgotPasswordRequest, ConfirmForgotPasswordResponse,
     LoginRequest, LoginResponse,
+    RespondToChallengeRequest, RespondToChallengeResponse,
     RefreshTokenRequest, RefreshTokenResponse,
     LogoutRequest, LogoutResponse
 )
@@ -715,8 +716,15 @@ def login() -> tuple[dict, int]:
                 "email": request.email,
                 "challenge": result.get('challenge')
             })
-            raise BadRequestError(f"Authentication challenge required: {result.get('challenge')}. "
-                                f"Please complete the required challenge (e.g., change temporary password).")
+            # Return challenge details so frontend can handle it
+            response = LoginResponse(
+                message=f"Authentication challenge required: {result.get('challenge')}",
+                challenge=result.get('challenge'),
+                session=result.get('session'),
+                challenge_parameters=result.get('challenge_parameters', {}),
+                code=200
+            )
+            return response.model_dump(exclude_none=True), 200
 
         logger.info("Login successful", extra={
             "endpoint": "POST /api/auth/login",
@@ -790,6 +798,111 @@ def login() -> tuple[dict, int]:
     except Exception as e:
         logger.exception("Unexpected error during login")
         raise InternalServerError("An unexpected error occurred during login")
+
+
+@app.post("/api/auth/respond-to-challenge")
+@tracer.capture_method
+def respond_to_challenge() -> tuple[dict, int]:
+    """
+    Respond to authentication challenge (e.g., NEW_PASSWORD_REQUIRED)
+
+    Used after receiving a challenge from /api/auth/login
+
+    Request Body:
+        session: Session token from login challenge response
+        new_password: New password to set
+
+    Returns:
+        tuple[dict, int]: Response with authentication tokens and HTTP status code (200)
+    """
+    try:
+        # Parse and validate request body
+        body = app.current_event.json_body
+
+        if not body:
+            raise BadRequestError("Request body is required")
+
+        # Validate request
+        request = RespondToChallengeRequest(**body)
+
+        logger.info("Responding to authentication challenge", extra={
+            "endpoint": "POST /api/auth/respond-to-challenge",
+            "action": "respond_to_challenge"
+        })
+
+        # Respond to challenge in Cognito
+        result = cognito_service.respond_to_challenge(
+            challenge_name='NEW_PASSWORD_REQUIRED',
+            session=request.session,
+            username=request.email,
+            new_password=request.new_password
+        )
+
+        # Check if another challenge is required
+        if result.get('challenge'):
+            logger.info("Another authentication challenge required", extra={
+                "endpoint": "POST /api/auth/respond-to-challenge",
+                "action": "respond_to_challenge",
+                "challenge": result.get('challenge')
+            })
+            raise BadRequestError(f"Another authentication challenge required: {result.get('challenge')}")
+
+        logger.info("Challenge response successful", extra={
+            "endpoint": "POST /api/auth/respond-to-challenge",
+            "action": "respond_to_challenge",
+            "status": "success"
+        })
+
+        # Build response
+        response = RespondToChallengeResponse(
+            message="Password updated successfully, authentication complete",
+            access_token=result['access_token'],
+            id_token=result['id_token'],
+            refresh_token=result['refresh_token'],
+            expires_in=result['expires_in'],
+            token_type=result['token_type'],
+            code=200
+        )
+
+        return response.model_dump(), 200
+
+    except ValidationError as e:
+        logger.warning(f"Validation error for challenge response: {e.errors()}")
+        errors = [{"field": err["loc"][0] if err["loc"] else "general", "message": err["msg"]} for err in e.errors()]
+        raise BadRequestError(f"Invalid request data: {errors}")
+
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        error_message = e.response['Error']['Message']
+
+        if error_code == 'NotAuthorizedException':
+            logger.warning("Failed challenge response", extra={
+                "endpoint": "POST /api/auth/respond-to-challenge",
+                "action": "respond_to_challenge",
+                "error_code": error_code,
+                "reason": "invalid_password_or_session"
+            })
+            raise UnauthorizedError("Invalid password or session expired")
+        elif error_code == 'InvalidPasswordException':
+            logger.warning("Password validation failed", extra={
+                "endpoint": "POST /api/auth/respond-to-challenge",
+                "action": "respond_to_challenge",
+                "error_code": error_code
+            })
+            raise BadRequestError(f"Password does not meet requirements: {error_message}")
+        else:
+            logger.error(f"Cognito error ({error_code}): {error_message}")
+            raise InternalServerError("Failed to process challenge response. Please try again later.")
+
+    except BadRequestError:
+        raise
+
+    except UnauthorizedError:
+        raise
+
+    except Exception as e:
+        logger.exception("Unexpected error during challenge response")
+        raise InternalServerError("An unexpected error occurred during challenge response")
 
 
 @app.post("/api/auth/refresh")

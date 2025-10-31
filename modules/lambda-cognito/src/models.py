@@ -119,13 +119,18 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=8, description="User's password")
 
 class LoginResponse(BaseModel):
-    """Response model for successful login"""
+    """Response model for login - either successful authentication or challenge required"""
     message: str
-    access_token: str = Field(..., description="JWT access token")
-    id_token: str = Field(..., description="JWT ID token")
-    refresh_token: str = Field(..., description="Refresh token for getting new access tokens")
-    expires_in: int = Field(..., description="Access token expiration time in seconds")
-    token_type: str = Field(default="Bearer", description="Token type")
+    # Successful login fields
+    access_token: Optional[str] = Field(None, description="JWT access token")
+    id_token: Optional[str] = Field(None, description="JWT ID token")
+    refresh_token: Optional[str] = Field(None, description="Refresh token for getting new access tokens")
+    expires_in: Optional[int] = Field(None, description="Access token expiration time in seconds")
+    token_type: Optional[str] = Field(default="Bearer", description="Token type")
+    # Challenge fields
+    challenge: Optional[str] = Field(None, description="Authentication challenge name (e.g., 'NEW_PASSWORD_REQUIRED')")
+    session: Optional[str] = Field(None, description="Session token for responding to challenge")
+    challenge_parameters: Optional[dict] = Field(None, description="Challenge parameters from Cognito")
     code: int
 
 class RefreshTokenRequest(BaseModel):
@@ -138,6 +143,22 @@ class RefreshTokenResponse(BaseModel):
     access_token: str = Field(..., description="New JWT access token")
     id_token: str = Field(..., description="New JWT ID token")
     expires_in: int = Field(..., description="Access token expiration time in seconds")
+    token_type: str = Field(default="Bearer", description="Token type")
+    code: int
+
+class RespondToChallengeRequest(BaseModel):
+    """Request model for responding to authentication challenge"""
+    email: EmailStr = Field(..., description="Email address of the user (from login attempt)")
+    session: str = Field(..., description="Session token from login challenge response")
+    new_password: str = Field(..., min_length=8, description="New password to set")
+
+class RespondToChallengeResponse(BaseModel):
+    """Response model for challenge response"""
+    message: str
+    access_token: str = Field(..., description="JWT access token")
+    id_token: str = Field(..., description="JWT ID token")
+    refresh_token: str = Field(..., description="Refresh token")
+    expires_in: int = Field(..., description="Token expiration time in seconds")
     token_type: str = Field(default="Bearer", description="Token type")
     code: int
 
