@@ -167,6 +167,10 @@ module "ecs_cluster" {
   sqs_logging_url              = module.sqs.logging_queue_url
   ecs_task_role_client_arn     = module.iam.ecs_task_role_client_arn
   ecs_task_role_account_arn    = module.iam.ecs_task_role_account_arn
+  sqs_verification_request_url = module.sqs.verification_request_queue_url
+  sqs_verification_results_url = module.sqs.verification_results_queue_url
+
+
 }
 
 module "iam" {

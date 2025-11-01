@@ -52,7 +52,9 @@ resource "aws_iam_policy" "email_sender_lambda_policy" {
         Effect = "Allow"
         Action = [
           "s3:PutObject",
-          "s3:PutObjectAcl"
+          "s3:PutObjectAcl",
+          "s3:GetObject",
+          "s3:HeadObject"
         ]
         Resource = "${var.s3_bucket_arn}/*"
       },

@@ -86,11 +86,11 @@ case $choice in
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo "📤 STEP 1: Sending Verification Request"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        CLIENT_ID="test$(date +%s)"
+        CLIENT_ID="879130f9-6ade-4c4b-a13e-a59e22f59f8a"
         
         aws sqs send-message \
             --queue-url "$REQUEST_QUEUE_URL" \
-            --message-body "{\"clientId\":\"$CLIENT_ID\",\"clientEmail\":\"adriankohcl01@gmail.com\",\"agent_Id\":\"adriankoh\",\"agentEmail\":\"adrian.koh.2022@scis.smu.edu.sg\"}"
+            --message-body "{\"clientId\":\"$CLIENT_ID\",\"clientEmail\":\"adriankohcl01@gmail.com\",\"agent_Id\":\"fraserthefairy\",\"agentEmail\":\"adrian.koh.2022@scis.smu.edu.sg\"}"
         
         if [ $? -eq 0 ]; then
             echo "✅ Message sent successfully!"
@@ -150,7 +150,7 @@ case $choice in
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo "📋 Recent Textract Jobs"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        aws textract list-document-analysis-jobs \
+        aws textract start-document-analysis \
             --max-results 10 \
             --query 'DocumentAnalysisJobs[*].[JobId,Status,StatusMessage,JobTag]' \
             --output table

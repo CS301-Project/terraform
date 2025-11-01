@@ -76,6 +76,16 @@ variable "sqs_logging_url" {
   type        = string
 }
 
+variable "sqs_verification_request_url" {
+  description = "URL of the SQS verification request"
+  type        = string
+}
+
+variable "sqs_verification_results_url" {
+  description = "URL of the SQS verification results"
+  type        = string
+}
+
 variable "ecs_task_role_client_arn" {
   description = "ARN of the ECS task role for client service"
   type        = string

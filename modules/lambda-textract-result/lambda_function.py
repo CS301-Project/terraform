@@ -1,3 +1,4 @@
+from email.mime import message
 import json
 import boto3
 import os
@@ -32,12 +33,12 @@ def lambda_handler(event, context):
             if status != 'SUCCEEDED':
                 print(f"Textract job {job_id} did not succeed. Status: {status}")
                 continue
-            
-            # JobTag format: clientId|bucket|key (pipe-delimited)
-            job_tag_parts = job_tag.split('|') if job_tag else []
+
+            # JobTag format: clientId:bucket:key (colon-delimited)
+            job_tag_parts = job_tag.split(':') if job_tag else []
             
             if len(job_tag_parts) != 3:
-                print(f"Invalid job tag format: {job_tag}. Expected: clientId|bucket|key")
+                print(f"Invalid job tag format: {job_tag}. Expected: clientId:bucket:key")
                 continue
             
             client_id, bucket_name, object_key = job_tag_parts
@@ -178,6 +179,8 @@ def send_to_verification_queue(client_id, extracted_data):
             'extractedData': extracted_data,
             'timestamp': datetime.utcnow().isoformat() + 'Z'
         }
+        
+        print("message data prepared for SQS:", message);
         
         response = sqs.send_message(
             QueueUrl=VERIFICATION_RESULTS_QUEUE_URL,

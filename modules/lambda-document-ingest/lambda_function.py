@@ -67,46 +67,18 @@ def extract_client_id(object_key):
 
 def start_textract_analysis(bucket_name, object_key, client_id):
     """
-    Start asynchronous Textract document analysis.
+    Start Textract document analysis.
+    For small documents (< 5MB), uses synchronous analysis directly.
     """
     try:
-        import hashlib
-        import time
+        # For NRIC documents which are typically small (< 5MB),
+        # synchronous analysis is faster and more reliable
+        print(f"Starting synchronous Textract analysis for small document...")
+        return analyze_document_sync(bucket_name, object_key, client_id)
         
-        # Create a valid ClientRequestToken (max 64 chars, alphanumeric + hyphens)
-        token_base = f"{client_id}-{int(time.time())}"
-        client_token = hashlib.md5(token_base.encode()).hexdigest()[:32]
-        
-        # Include bucket and key in JobTag for later S3 deletion
-        # Format: clientId|bucket|key (pipe-delimited for easy parsing)
-        job_tag = f"{client_id}|{bucket_name}|{object_key}"
-        
-        response = textract.start_document_analysis(
-            DocumentLocation={
-                'S3Object': {
-                    'Bucket': bucket_name,
-                    'Name': object_key
-                }
-            },
-            FeatureTypes=['TABLES', 'FORMS'],  # Extract tables and forms
-            NotificationChannel={
-                'SNSTopicArn': SNS_TOPIC_ARN,
-                'RoleArn': SNS_ROLE_ARN
-            },
-            ClientRequestToken=client_token,
-            JobTag=job_tag
-        )
-        return response
-        
-    except ClientError as e:
-        print(f"Error starting Textract analysis: {str(e)}")
-        # For smaller documents, try synchronous analysis as fallback
-        try:
-            print("Attempting synchronous analysis as fallback...")
-            return analyze_document_sync(bucket_name, object_key, client_id)
-        except Exception as sync_error:
-            print(f"Synchronous analysis also failed: {str(sync_error)}")
-            return None
+    except Exception as e:
+        print(f"Error in Textract analysis: {str(e)}")
+        return None
 
 def analyze_document_sync(bucket_name, object_key, client_id):
     """
@@ -114,6 +86,8 @@ def analyze_document_sync(bucket_name, object_key, client_id):
     This bypasses the SNS notification and directly processes the result.
     """
     try:
+        import re
+        
         # Get document from S3
         s3_object = s3.get_object(Bucket=bucket_name, Key=object_key)
         document_bytes = s3_object['Body'].read()
@@ -125,9 +99,13 @@ def analyze_document_sync(bucket_name, object_key, client_id):
         )
         
         # Manually trigger SNS notification with the results
-        # This simulates the async flow for consistency
-        # Use same JobTag format as async: clientId|bucket|key
-        job_tag = f"{client_id}|{bucket_name}|{object_key}"
+        # Use colon as delimiter (same format as async)
+        # Sanitize all components to only allowed characters
+        safe_client_id = re.sub(r'[^a-zA-Z0-9_.\-:]', '_', client_id)
+        safe_bucket_name = re.sub(r'[^a-zA-Z0-9_.\-:]', '_', bucket_name)
+        safe_object_key = re.sub(r'[^a-zA-Z0-9_.\-:]', '_', object_key)
+        
+        job_tag = f"{safe_client_id}:{safe_bucket_name}:{safe_object_key}"
         
         sns_message = {
             'JobId': 'sync-' + client_id,
