@@ -13,6 +13,8 @@ resource "null_resource" "install_dependencies" {
   triggers = {
     requirements = filemd5("${path.module}/requirements.txt")
     source_hash  = sha256(join("", [for f in fileset("${path.module}/src", "**") : filesha256("${path.module}/src/${f}")]))
+    # If src directory exists, compute a hash of its files; otherwise use an empty string.
+    # source_hash  = can(fileset("${path.module}/src", "**")) ? sha256(join("", [for f in fileset("${path.module}/src", "**") : filesha256("${path.module}/src/${f}")])) : ""
   }
 
   provisioner "local-exec" {
@@ -27,6 +29,10 @@ resource "null_resource" "install_dependencies" {
         --only-binary=:all: \
         --upgrade
       cp -r ${path.module}/src/* ${path.module}/package/
+      # Only copy source files if the src directory exists (avoid failing when absent)
+      # if [ -d "${path.module}/src" ]; then
+      #   cp -r ${path.module}/src/* ${path.module}/package/ || true
+      # fi
     EOF
   }
 }
