@@ -46,38 +46,38 @@ resource "aws_autoscaling_group" "account_nodes" {
 
 resource "aws_autoscaling_policy" "client_scale_out" {
   name                   = "client-scale-out"
-  autoscaling_group_name  = aws_autoscaling_group.client_nodes.name
-  policy_type             = "SimpleScaling"
-  adjustment_type         = "ChangeInCapacity"
-  scaling_adjustment      = 1
-  cooldown                = 300
+  autoscaling_group_name = aws_autoscaling_group.client_nodes.name
+  policy_type            = "SimpleScaling"
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = 1
+  cooldown               = 300
 }
 
 resource "aws_autoscaling_policy" "client_scale_in" {
   name                   = "client-scale-in"
-  autoscaling_group_name  = aws_autoscaling_group.client_nodes.name
-  policy_type             = "SimpleScaling"
-  adjustment_type         = "ChangeInCapacity"
-  scaling_adjustment      = -1
-  cooldown                = 300
+  autoscaling_group_name = aws_autoscaling_group.client_nodes.name
+  policy_type            = "SimpleScaling"
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = -1
+  cooldown               = 300
 }
 
 resource "aws_autoscaling_policy" "account_scale_out" {
   name                   = "account-scale-out"
-  autoscaling_group_name  = aws_autoscaling_group.account_nodes.name
-  policy_type             = "SimpleScaling"
-  adjustment_type         = "ChangeInCapacity"
-  scaling_adjustment      = 1
-  cooldown                = 300
+  autoscaling_group_name = aws_autoscaling_group.account_nodes.name
+  policy_type            = "SimpleScaling"
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = 1
+  cooldown               = 300
 }
 
 resource "aws_autoscaling_policy" "account_scale_in" {
   name                   = "account-scale-in"
-  autoscaling_group_name  = aws_autoscaling_group.account_nodes.name
-  policy_type             = "SimpleScaling"
-  adjustment_type         = "ChangeInCapacity"
-  scaling_adjustment      = -1
-  cooldown                = 300
+  autoscaling_group_name = aws_autoscaling_group.account_nodes.name
+  policy_type            = "SimpleScaling"
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = -1
+  cooldown               = 300
 }
 
 
@@ -164,7 +164,7 @@ resource "aws_appautoscaling_policy" "client_scale_out" {
   service_namespace  = aws_appautoscaling_target.client_service.service_namespace
 
   target_tracking_scaling_policy_configuration {
-    target_value       = 70
+    target_value = 70
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
@@ -181,7 +181,7 @@ resource "aws_appautoscaling_policy" "client_scale_in" {
   service_namespace  = aws_appautoscaling_target.client_service.service_namespace
 
   target_tracking_scaling_policy_configuration {
-    target_value       = 30
+    target_value = 30
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
@@ -207,7 +207,7 @@ resource "aws_appautoscaling_policy" "account_scale_out" {
   service_namespace  = aws_appautoscaling_target.account_service.service_namespace
 
   target_tracking_scaling_policy_configuration {
-    target_value       = 70
+    target_value = 70
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
@@ -224,7 +224,7 @@ resource "aws_appautoscaling_policy" "account_scale_in" {
   service_namespace  = aws_appautoscaling_target.account_service.service_namespace
 
   target_tracking_scaling_policy_configuration {
-    target_value       = 30
+    target_value = 30
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
