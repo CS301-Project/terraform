@@ -625,7 +625,7 @@ class CognitoService:
                 'Session': session,
                 'ChallengeResponses': {
                     'USERNAME': username,
-                    'PASSWORD': new_password
+                    'NEW_PASSWORD': new_password
                 }
             }
 
