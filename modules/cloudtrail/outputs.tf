@@ -1,6 +1,6 @@
 output "cloudtrail_bucket" {
   description = "S3 bucket storing CloudTrail logs"
-  value = aws_s3_bucket.cloudtrail_logs.bucket
+  value       = aws_s3_bucket.cloudtrail_logs.bucket
 }
 
 output "cloudtrail_name" {
@@ -10,5 +10,5 @@ output "cloudtrail_name" {
 
 output "cloudtrail_log_group" {
   description = "CloudWatch log group for CloudTrail logs"
-  value = var.enable_log_group ? aws_cloudwatch_log_group.cloudtrail_logs.name : ""
+  value       = var.enable_log_group ? aws_cloudwatch_log_group.cloudtrail_logs.name : ""
 }

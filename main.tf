@@ -185,7 +185,7 @@ module "asg" {
 
 module "cloudtrail" {
   source   = "./modules/cloudtrail"
-  env_name = "dev"       # or prod, staging, etc.
+  env_name = "dev" # or prod, staging, etc.
 }
 
 
