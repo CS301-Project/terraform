@@ -27,7 +27,7 @@ variable "template_name" {
 variable "presigned_url_expiration" {
   description = "Expiration time for presigned URLs in seconds"
   type        = number
-  default     = 86400  # 24 hours
+  default     = 86400 # 24 hours
 }
 
 variable "configuration_set" {

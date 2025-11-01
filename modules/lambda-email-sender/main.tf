@@ -104,11 +104,11 @@ resource "aws_lambda_function" "email_sender" {
 
   environment {
     variables = {
-      BUCKET_NAME               = var.bucket_name
-      TEMPLATE_NAME             = var.template_name
-      PRESIGNED_URL_EXPIRATION  = var.presigned_url_expiration
-      CONFIGURATION_SET         = var.configuration_set
-      LOGGING_QUEUE_URL         = var.logging_queue_url
+      BUCKET_NAME              = var.bucket_name
+      TEMPLATE_NAME            = var.template_name
+      PRESIGNED_URL_EXPIRATION = var.presigned_url_expiration
+      CONFIGURATION_SET        = var.configuration_set
+      LOGGING_QUEUE_URL        = var.logging_queue_url
     }
   }
 

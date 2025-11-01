@@ -84,34 +84,34 @@ resource "aws_iam_role_policy" "lambda_cognito_policy" {
   role = aws_iam_role.lambda_cognito.id
 
   policy = jsonencode({
-  Version = "2012-10-17"
-  Statement = [
-    {
-      Effect = "Allow"
-      Action = [
-        "cognito-idp:AdminInitiateAuth",
-        "cognito-idp:AdminCreateUser",
-        "cognito-idp:AdminSetUserPassword",
-        "cognito-idp:AdminDeleteUser",
-        "cognito-idp:AdminDisableUser",
-        "cognito-idp:AdminEnableUser",
-        "cognito-idp:AdminUpdateUserAttributes",
-        "cognito-idp:AdminGetUser",
-        "cognito-idp:AdminResetUserPassword",
-        "cognito-idp:ListUsers",
-        "cognito-idp:SignUp",
-        "cognito-idp:ConfirmSignUp",
-        "cognito-idp:InitiateAuth",
-        "cognito-idp:RespondToAuthChallenge",
-        "cognito-idp:GetUser",
-        "cognito-idp:ForgotPassword",
-        "cognito-idp:ConfirmForgotPassword",
-        "cognito-idp:GlobalSignOut"
-      ],
-      Resource = "*"
-    }
-  ]
-})
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:AdminInitiateAuth",
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminSetUserPassword",
+          "cognito-idp:AdminDeleteUser",
+          "cognito-idp:AdminDisableUser",
+          "cognito-idp:AdminEnableUser",
+          "cognito-idp:AdminUpdateUserAttributes",
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminResetUserPassword",
+          "cognito-idp:ListUsers",
+          "cognito-idp:SignUp",
+          "cognito-idp:ConfirmSignUp",
+          "cognito-idp:InitiateAuth",
+          "cognito-idp:RespondToAuthChallenge",
+          "cognito-idp:GetUser",
+          "cognito-idp:ForgotPassword",
+          "cognito-idp:ConfirmForgotPassword",
+          "cognito-idp:GlobalSignOut"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 # Attach basic Lambda execution policy

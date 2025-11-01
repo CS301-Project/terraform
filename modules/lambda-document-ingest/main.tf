@@ -142,7 +142,7 @@ resource "aws_lambda_function" "document_ingest" {
       SNS_ROLE_ARN  = aws_iam_role.textract_sns_role.arn
     }
   }
-  
+
   tags = {
     Name        = var.function_name
     Environment = "production"

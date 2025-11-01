@@ -5,11 +5,11 @@ resource "aws_api_gateway_rest_api" "main_api" {
 
 # Cognito Authorizer
 resource "aws_api_gateway_authorizer" "cognito" {
-  name                    = "cognito-authorizer"
-  rest_api_id             = aws_api_gateway_rest_api.main_api.id
-  identity_source         = "method.request.header.Authorization"
-  type                    = "COGNITO_USER_POOLS"
-  provider_arns           = [var.user_pool_arn]
+  name            = "cognito-authorizer"
+  rest_api_id     = aws_api_gateway_rest_api.main_api.id
+  identity_source = "method.request.header.Authorization"
+  type            = "COGNITO_USER_POOLS"
+  provider_arns   = [var.user_pool_arn]
 }
 
 # =====================================

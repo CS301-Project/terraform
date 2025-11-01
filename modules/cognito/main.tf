@@ -35,8 +35,8 @@ resource "aws_cognito_user_pool" "main" {
 
 # Cognito User Pool Client
 resource "aws_cognito_user_pool_client" "main" {
-  name                = var.user_pool_client_name
-  user_pool_id        = aws_cognito_user_pool.main.id
+  name         = var.user_pool_client_name
+  user_pool_id = aws_cognito_user_pool.main.id
   explicit_auth_flows = [
     "ALLOW_USER_AUTH",
     "ALLOW_USER_PASSWORD_AUTH",
@@ -67,24 +67,24 @@ resource "aws_cognito_user_pool_domain" "main" {
 
 # Cognito User Groups
 resource "aws_cognito_user_group" "root_admin" {
-  name             = "root_admin"
-  user_pool_id     = aws_cognito_user_pool.main.id
-  description      = "Root admin group with full system access"
-  precedence       = 0
+  name         = "root_admin"
+  user_pool_id = aws_cognito_user_pool.main.id
+  description  = "Root admin group with full system access"
+  precedence   = 0
 }
 
 resource "aws_cognito_user_group" "admin" {
-  name             = "admin"
-  user_pool_id     = aws_cognito_user_pool.main.id
-  description      = "Admin group with administrative access"
-  precedence       = 1
+  name         = "admin"
+  user_pool_id = aws_cognito_user_pool.main.id
+  description  = "Admin group with administrative access"
+  precedence   = 1
 }
 
 resource "aws_cognito_user_group" "agent" {
-  name             = "agent"
-  user_pool_id     = aws_cognito_user_pool.main.id
-  description      = "Agent group for standard user access"
-  precedence       = 2
+  name         = "agent"
+  user_pool_id = aws_cognito_user_pool.main.id
+  description  = "Agent group for standard user access"
+  precedence   = 2
 }
 
 #initialise root_admin
@@ -99,7 +99,7 @@ resource "aws_cognito_user" "root_admin" {
 
   # Set temporary password - forces change on first login
   temporary_password = random_password.root_admin_temp.result
-  
+
   # Suppress welcome email since this is a system account
   message_action = "SUPPRESS"
 }
