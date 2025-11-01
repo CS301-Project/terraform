@@ -130,10 +130,6 @@ module "ecs_cluster" {
   source            = "./modules/ecs_cluster"
   account_ecs_sg_id = module.security_groups.account_ecs_sg_id
   client_ecs_sg_id  = module.security_groups.client_ecs_sg_id
-  ecs_private_subnet_ids = [
-    module.vpc.ecs_az1_subnet_id,
-    module.vpc.ecs_az2_subnet_id
-  ]
   account_alb_target_group_arn = module.alb.account_alb_target_group_arn
   client_alb_target_group_arn  = module.alb.client_alb_target_group_arn
   ecs_instance_profile_name    = module.iam.ecs_instance_profile_name
@@ -150,6 +146,21 @@ module "ecs_cluster" {
   ecs_task_role_client_arn     = module.iam.ecs_task_role_client_arn
   ecs_task_role_account_arn    = module.iam.ecs_task_role_account_arn
 }
+
+module "asg" {
+  source = "./modules/asg"
+
+  ecs_private_subnet_ids     = [module.vpc.ecs_az1_subnet_id, module.vpc.ecs_az2_subnet_id]
+
+  client_launch_template_id  = module.ecs_cluster.client_launch_template_id
+  account_launch_template_id = module.ecs_cluster.account_launch_template_id
+
+  client_cluster_name        = module.ecs_cluster.client_cluster_name
+  client_service_name        = module.ecs_cluster.client_service_name
+  account_cluster_name       = module.ecs_cluster.account_cluster_name
+  account_service_name       = module.ecs_cluster.account_service_name
+}
+
 
 module "iam" {
   source                = "./modules/iam"
