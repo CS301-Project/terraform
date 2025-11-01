@@ -129,6 +129,9 @@ resource "aws_secretsmanager_secret_version" "root_admin_credentials" {
 }
 
 resource "random_password" "root_admin_temp" {
-  length  = 20
-  special = true
+  length           = 20
+  special          = true
+  override_special = "!@#$%^&*()-_=+"
+  upper            = true
+  lower            = true
 }

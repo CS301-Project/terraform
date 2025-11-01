@@ -183,6 +183,11 @@ module "asg" {
   account_service_name = module.ecs_cluster.account_service_name
 }
 
+module "cloudtrail" {
+  source   = "./modules/cloudtrail"
+  env_name = "dev" # or prod, staging, etc.
+}
+
 
 module "iam" {
   source                = "./modules/iam"
