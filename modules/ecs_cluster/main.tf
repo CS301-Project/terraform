@@ -90,44 +90,6 @@ resource "aws_launch_template" "account_nodes" {
   }
 }
 
-resource "aws_autoscaling_group" "client_nodes" {
-  name                = "client-ecs-asg"
-  min_size            = 2
-  max_size            = 4
-  desired_capacity    = 2
-  vpc_zone_identifier = var.ecs_private_subnet_ids
-
-  launch_template {
-    id      = aws_launch_template.client_nodes.id
-    version = "$Latest"
-  }
-
-  tag {
-    key                 = "Name"
-    value               = "client-ecs-node"
-    propagate_at_launch = true
-  }
-}
-
-resource "aws_autoscaling_group" "account_nodes" {
-  name                = "account-ecs-asg"
-  min_size            = 2
-  max_size            = 4
-  desired_capacity    = 2
-  vpc_zone_identifier = var.ecs_private_subnet_ids
-
-  launch_template {
-    id      = aws_launch_template.account_nodes.id
-    version = "$Latest"
-  }
-
-  tag {
-    key                 = "Name"
-    value               = "account-ecs-node"
-    propagate_at_launch = true
-  }
-}
-
 resource "aws_ecs_task_definition" "client" {
   family                   = "client-task"
   network_mode             = "bridge"

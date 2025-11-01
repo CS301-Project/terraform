@@ -8,11 +8,6 @@ variable "client_ecs_sg_id" {
   type        = string
 }
 
-variable "ecs_private_subnet_ids" {
-  description = "The IDs of the private subnets that ECS instances will be provisioned in"
-  type        = list(string)
-}
-
 variable "account_alb_target_group_arn" {
   description = "The ARN of the ALB target group for the Account service"
   type        = string
