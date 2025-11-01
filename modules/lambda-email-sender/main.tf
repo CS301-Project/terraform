@@ -61,6 +61,13 @@ resource "aws_iam_policy" "email_sender_lambda_policy" {
       {
         Effect = "Allow"
         Action = [
+          "s3:ListBucket"
+        ]
+        Resource = var.s3_bucket_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "ses:SendEmail",
           "ses:SendTemplatedEmail",
           "ses:SendRawEmail"
