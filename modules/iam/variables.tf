@@ -17,3 +17,13 @@ variable "sqs_logging_arn" {
   description = "ARN of the SQS queue for logging"
   type        = string
 }
+
+variable "verification_request_queue_arn" {
+  description = "ARN of the verification request SQS queue"
+  type        = string
+}
+
+variable "verification_results_queue_arn" {
+  description = "ARN of the verification results SQS queue"
+  type        = string
+}

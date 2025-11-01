@@ -123,6 +123,14 @@ resource "aws_ecs_task_definition" "client" {
         {
           name  = "SQS_LOGGING_URL"
           value = var.sqs_logging_url
+        },
+        {
+          name  = "SQS_VERIFICATION_REQUEST_URL"
+          value = var.sqs_verification_request_url
+        },
+        {
+          name  = "SQS_VERIFICATION_RESULTS_URL"
+          value = var.sqs_verification_results_url
         }
       ]
       secrets = [

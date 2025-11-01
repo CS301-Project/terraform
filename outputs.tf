@@ -47,10 +47,52 @@ output "frontend_bucket" {
 
 output "api_endpoint" {
   description = "API Gateway endpoint URL for reading logs"
-  value       = module.api_gateway.api_endpoint
+  value       = module.api_gateway.api_invoke_url
 }
 
 output "api_id" {
   description = "API Gateway REST API ID"
   value       = module.api_gateway.api_id
+}
+
+# Cognito Outputs
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  value       = module.cognito.user_pool_id
+}
+
+output "cognito_user_pool_domain" {
+  description = "Cognito User Pool Domain"
+  value       = module.cognito.user_pool_domain
+}
+
+output "cognito_login_endpoint" {
+  description = "Cognito login endpoint URL"
+  value       = "https://${module.cognito.user_pool_domain}.auth.ap-southeast-1.amazoncognito.com/login"
+}
+
+output "cognito_token_endpoint" {
+  description = "Cognito OAuth token endpoint"
+  value       = "https://${module.cognito.user_pool_domain}.auth.ap-southeast-1.amazoncognito.com/oauth2/token"
+}
+
+# Verification Queue Outputs
+output "verification_request_queue_url" {
+  description = "URL of the verification request SQS queue - Your backend publishes verification requests here"
+  value       = module.sqs.verification_request_queue_url
+}
+
+output "verification_results_queue_url" {
+  description = "URL of the verification results SQS queue - Your backend polls this queue for Textract results"
+  value       = module.sqs.verification_results_queue_url
+}
+
+output "verification_request_queue_arn" {
+  description = "ARN of the verification request SQS queue"
+  value       = module.sqs.verification_request_queue_arn
+}
+
+output "verification_results_queue_arn" {
+  description = "ARN of the verification results SQS queue"
+  value       = module.sqs.verification_results_queue_arn
 }
